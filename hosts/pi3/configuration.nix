@@ -1,4 +1,4 @@
-{ config, inputs, lib, modulesPath, pkgs, ... }: {
+{ config, flake, inputs, lib, modulesPath, pkgs, ... }: {
   imports = [
     inputs.nixos-hardware.nixosModules.raspberry-pi-3
     inputs.nix-pi-loader.nixosModules.default
@@ -84,4 +84,7 @@
     gid = 1000;
   };
 
+  environment.systemPackages = with pkgs; [
+    flake.packages.${pkgs.stdenv.hostPlatform.system}.tacxble
+  ];
 }

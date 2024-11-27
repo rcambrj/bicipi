@@ -9,6 +9,7 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nix-pi-loader.url  = "github:rcambrj/nix-pi-loader";
     nix-pi-loader.inputs.nixpkgs.follows = "nixpkgs";
+    gomod2nix.url = "github:nix-community/gomod2nix";
   };
 
   # Load the blueprint
