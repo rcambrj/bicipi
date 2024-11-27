@@ -1,7 +1,7 @@
 { pkgs }:
 pkgs.mkShell {
   # Add build dependencies
-  packages = [ "go" "libusb1" ];
+  packages = with pkgs; [ go libusb1 ];
 
   # Add environment variables
   env = { };
