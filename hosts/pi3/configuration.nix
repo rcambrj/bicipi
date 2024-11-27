@@ -40,8 +40,13 @@
     inherit lib config pkgs;
     format = "raw";
     partitionTableType = "efi";
+    copyChannel = false;
+    diskSize = "auto";
+    additionalSpace = "64M";
+    bootSize = "128M";
     touchEFIVars = false;
     installBootLoader = true;
+    label = "nixos";
   });
   nix.settings.trusted-users = [ "root" "nixos" ];
   nix.settings.substituters = lib.mkForce config.nix.settings.trusted-substituters;
@@ -56,7 +61,13 @@
   systemd.network.enable = true;
   networking.useDHCP = false;
   networking.useNetworkd = true;
-  # systemd.network = {};
+  systemd.network = {
+    networks."10-wired" = {
+      matchConfig.Name = "e*";
+      linkConfig.RequiredForOnline = "routable";
+      networkConfig.DHCP = "yes";
+    };
+  };
   zramSwap = {
     enable = true;
     memoryPercent = 50;

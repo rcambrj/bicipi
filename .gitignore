@@ -4,5 +4,6 @@
 # nix
 result
 result-*
+nixos.img
 
 bin
