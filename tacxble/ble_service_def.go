@@ -2,6 +2,7 @@ package tacxble
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	"tinygo.org/x/bluetooth"
 )
@@ -41,30 +42,57 @@ func getBLEServiceDefinition() bluetooth.Service {
 	return ftmService
 }
 
-func getBytesFromBitmask(bitmask uint32) []byte {
-	bytes := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bytes, bitmask)
-	return bytes
+func printBinary(bytes []byte) {
+	for _, n := range bytes {
+		fmt.Printf("%08b ", n) // prints 00000000 11111101
+	}
+	fmt.Printf("\n")
 }
 
 func getFitnessMachineFeatures() []byte {
-	var bitmask uint32 = 0
-	bitmask |= FMFCadenceSupported
-	return getBytesFromBitmask(bitmask)
+	// confusing: this contains 4.3.1.1 Fitness Machine Features & 4.3.1.2 Target Setting Features
+	var featuresBitmask uint32 = FMFCadenceSupported | FMFPowerMeasurementSupported
+	var targetSettingsBitmask uint32 = TSFPowerTargetSettingSupported | TSFIndoorBikeSimulationParametersSupported
+	bytes := make([]byte, 0, 64)
+	bytes = binary.LittleEndian.AppendUint32(bytes, featuresBitmask)
+	bytes = binary.LittleEndian.AppendUint32(bytes, targetSettingsBitmask)
+	fmt.Println("getFitnessMachineFeatures")
+	// FortiusAnt: 00000010 01000000 00000000 00000000 00001000 00100000 00000000 00000000
+	printBinary(bytes)
+	return bytes
 }
 func getIndoorBikeData() []byte {
-	var bitmask uint32 = 0
-	return getBytesFromBitmask(bitmask)
+	var bitmask uint16 = IBDInstantaneousPowerPresent | IBDHeartRatePresent
+	bytes := make([]byte, 4*16/8)
+	binary.LittleEndian.PutUint16(bytes, bitmask)
+	fmt.Println("getIndoorBikeData")
+	// FortiusAnt: 01000000 00000010 01111011 00000000 11001000 00000001 01011001 00000000
+	printBinary(bytes)
+	return bytes
 }
 func getFitnessMachineControlPoint() []byte {
-	var bitmask uint32 = 0
-	return getBytesFromBitmask(bitmask)
+	// Collector commands sent to Server
+	bytes := []byte{0x00, 0x00}
+	fmt.Println("getFitnessMachineControlPoint")
+	// FortiusAnt: 00000000 00000000
+	printBinary(bytes)
+	return bytes
 }
 func getFitnessMachineStatus() []byte {
-	var bitmask uint32 = 0
-	return getBytesFromBitmask(bitmask)
+	// Server status sent to Collector
+	bytes := []byte{0x00, 0x00}
+	fmt.Println("getFitnessMachineStatus")
+	// FortiusAnt: 00000000 00000000
+	printBinary(bytes)
+	return bytes
 }
 func getSupportedPowerRange() []byte {
-	var bitmask uint32 = 0
-	return getBytesFromBitmask(bitmask)
+	bytes := make([]byte, 0, 3*16/8)
+	bytes = binary.LittleEndian.AppendUint16(bytes, 0)    // min
+	bytes = binary.LittleEndian.AppendUint16(bytes, 1000) // max
+	bytes = binary.LittleEndian.AppendUint16(bytes, 1)    // step
+	fmt.Println("getSupportedPowerRange")
+	// FortiusAnt: 00000000 00000000 11101000 00000011 00000001 00000000
+	printBinary(bytes)
+	return bytes
 }
