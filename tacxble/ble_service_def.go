@@ -7,34 +7,50 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-func getBLEServiceDefinition() bluetooth.Service {
+func getFitnessMachineServiceDefinition() bluetooth.Service {
 	ftmService := bluetooth.Service{
 		UUID: bluetooth.ServiceUUIDFitnessMachine,
 		Characteristics: []bluetooth.CharacteristicConfig{
 			{
 				UUID:  bluetooth.CharacteristicUUIDFitnessMachineFeature,
 				Value: getFitnessMachineFeatures(),
-				Flags: bluetooth.CharacteristicReadPermission | bluetooth.CharacteristicWritePermission,
+				Flags: bluetooth.CharacteristicReadPermission,
 			},
 			{
 				UUID:  bluetooth.CharacteristicUUIDIndoorBikeData,
 				Value: getIndoorBikeData(),
-				Flags: bluetooth.CharacteristicReadPermission | bluetooth.CharacteristicWritePermission,
-			},
-			{
-				UUID:  bluetooth.CharacteristicUUIDFitnessMachineControlPoint,
-				Value: getFitnessMachineControlPoint(),
-				Flags: bluetooth.CharacteristicReadPermission | bluetooth.CharacteristicWritePermission,
+				Flags: bluetooth.CharacteristicNotifyPermission,
 			},
 			{
 				UUID:  bluetooth.CharacteristicUUIDFitnessMachineStatus,
 				Value: getFitnessMachineStatus(),
-				Flags: bluetooth.CharacteristicReadPermission | bluetooth.CharacteristicWritePermission,
+				Flags: bluetooth.CharacteristicNotifyPermission,
+			},
+			{
+				UUID:  bluetooth.CharacteristicUUIDFitnessMachineControlPoint,
+				Value: getFitnessMachineControlPoint(),
+				Flags: bluetooth.CharacteristicIndicatePermission | bluetooth.CharacteristicWritePermission,
+				WriteEvent: func(client bluetooth.Connection, offset int, value []byte) {
+					printBinary(value)
+					//getFitnessMachineControlPoint()
+				},
 			},
 			{
 				UUID:  bluetooth.CharacteristicUUIDSupportedPowerRange,
 				Value: getSupportedPowerRange(),
-				Flags: bluetooth.CharacteristicReadPermission | bluetooth.CharacteristicWritePermission,
+				Flags: bluetooth.CharacteristicReadPermission,
+			},
+			// TODO: 0x2AD6
+			//{
+			//UUID:  bluetooth.CharacteristicUUIDSupportedResistanceLevelRange,
+			//Value: TODO,
+			//Flags: bluetooth.CharacteristicReadPermission,
+			//},
+			// TODO: 0x2AD3
+			{
+				UUID:  bluetooth.CharacteristicUUIDTrainingStatus,
+				Value: []byte{0x01},
+				Flags: bluetooth.CharacteristicNotifyPermission,
 			},
 		},
 	}

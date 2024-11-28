@@ -14,8 +14,7 @@ func Start() {
 
 	must("enable BLE stack", adapter.Enable())
 
-	ftmService := getBLEServiceDefinition()
-
+	ftmService := getFitnessMachineServiceDefinition()
 	must("declare FTMS service", adapter.AddService(&ftmService))
 
 	adv := adapter.DefaultAdvertisement()
