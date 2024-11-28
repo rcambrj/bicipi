@@ -7,6 +7,11 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
+func unhandledWriteEvent(name string, offset int, value []byte) {
+	fmt.Printf("Recieved %s\nOffset %d\n", name, offset)
+	printBinary(value)
+}
+
 func getFitnessMachineServiceDefinition() bluetooth.Service {
 	ftmService := bluetooth.Service{
 		UUID: bluetooth.ServiceUUIDFitnessMachine,
@@ -31,8 +36,7 @@ func getFitnessMachineServiceDefinition() bluetooth.Service {
 				Value: getFitnessMachineControlPoint(),
 				Flags: bluetooth.CharacteristicIndicatePermission | bluetooth.CharacteristicWritePermission,
 				WriteEvent: func(client bluetooth.Connection, offset int, value []byte) {
-					printBinary(value)
-					//getFitnessMachineControlPoint()
+					unhandledWriteEvent("CharacteristicUUIDFitnessMachineControlPoint", offset, value)
 				},
 			},
 			{
@@ -40,13 +44,13 @@ func getFitnessMachineServiceDefinition() bluetooth.Service {
 				Value: getSupportedPowerRange(),
 				Flags: bluetooth.CharacteristicReadPermission,
 			},
-			// TODO: 0x2AD6
+			////TODO: 0x2AD6
 			//{
-			//UUID:  bluetooth.CharacteristicUUIDSupportedResistanceLevelRange,
-			//Value: TODO,
-			//Flags: bluetooth.CharacteristicReadPermission,
+			//  UUID:  bluetooth.CharacteristicUUIDSupportedResistanceLevelRange,
+			//  Value: TODO,
+			//  Flags: bluetooth.CharacteristicReadPermission,
 			//},
-			// TODO: 0x2AD3
+			////TODO: 0x2AD3
 			{
 				UUID:  bluetooth.CharacteristicUUIDTrainingStatus,
 				Value: []byte{0x01},
@@ -113,9 +117,62 @@ func getCyclingPowerServiceDefinition() bluetooth.Service {
 				//Value: TODO
 				Flags: bluetooth.CharacteristicIndicatePermission | bluetooth.CharacteristicWritePermission,
 				WriteEvent: func(client bluetooth.Connection, offset int, value []byte) {
-					printBinary(value)
+					unhandledWriteEvent("CharacteristicUUIDCyclingPowerControlPoint", offset, value)
 				},
 			},
+		},
+	}
+
+	return service
+}
+
+func getHeartRateService(heartRate *bluetooth.Characteristic) bluetooth.Service {
+	service := bluetooth.Service{
+		UUID: bluetooth.ServiceUUIDHeartRate,
+		Characteristics: []bluetooth.CharacteristicConfig{
+			{
+				Handle: heartRate,
+				UUID:   bluetooth.CharacteristicUUIDHeartRateMeasurement,
+				Value:  getHeartRate(69),
+				Flags:  bluetooth.CharacteristicNotifyPermission,
+			},
+			//{
+			//UUID: bluetooth.New16BitUUID(0x2902),
+			////Value: TODO
+			//Value: []byte{0x00},
+			//Flags: bluetooth.CharacteristicReadPermission | bluetooth.CharacteristicWritePermission,
+			//},
+		},
+	}
+
+	return service
+}
+
+// 347b0001-7635-408b-8918-8ff3949ce592
+var ServiceUUIDCyclingSteering = bluetooth.New32BitUUID(0x347B0001)
+
+func getVirtualSteeringService() bluetooth.Service {
+	service := bluetooth.Service{
+		UUID:            ServiceUUIDCyclingSteering,
+		Characteristics: []bluetooth.CharacteristicConfig{
+			//{
+			//  UUID: bluetooth.Charater,
+			//  //Value: TODO
+			//  Value: []byte{0x00},
+			//  Flags: bluetooth.CharacteristicNotifyPermission,
+			//},
+			//{
+			//	UUID: bluetooth.CharacteristicUUIDCSCFeature,
+			//	//Value: TODO
+			//	Value: []byte{0x00},
+			//	Flags: bluetooth.CharacteristicReadPermission,
+			//},
+			//{
+			//	UUID: bluetooth.CharacteristicUUIDSensorLocation,
+			//	//Value: TODO
+			//	Value: []byte{0x00},
+			//	Flags: bluetooth.CharacteristicReadPermission,
+			//},
 		},
 	}
 
@@ -141,6 +198,7 @@ func getFitnessMachineFeatures() []byte {
 	printBinary(bytes)
 	return bytes
 }
+
 func getIndoorBikeData() []byte {
 	var bitmask uint16 = IBDInstantaneousPowerPresent | IBDHeartRatePresent
 	bytes := make([]byte, 4*16/8)
@@ -150,6 +208,7 @@ func getIndoorBikeData() []byte {
 	printBinary(bytes)
 	return bytes
 }
+
 func getFitnessMachineControlPoint() []byte {
 	// Collector commands sent to Server
 	bytes := []byte{0x00, 0x00}
@@ -158,6 +217,7 @@ func getFitnessMachineControlPoint() []byte {
 	printBinary(bytes)
 	return bytes
 }
+
 func getFitnessMachineStatus() []byte {
 	// Server status sent to Collector
 	bytes := []byte{0x00, 0x00}
@@ -166,6 +226,7 @@ func getFitnessMachineStatus() []byte {
 	printBinary(bytes)
 	return bytes
 }
+
 func getSupportedPowerRange() []byte {
 	bytes := make([]byte, 0, 3*16/8)
 	bytes = binary.LittleEndian.AppendUint16(bytes, 0)    // min
@@ -174,5 +235,15 @@ func getSupportedPowerRange() []byte {
 	fmt.Println("getSupportedPowerRange")
 	// FortiusAnt: 00000000 00000000 11101000 00000011 00000001 00000000
 	printBinary(bytes)
+	return bytes
+}
+
+func getHeartRate(heartRate uint8) []byte {
+	bytes := []byte{
+		0,         // flags
+		heartRate, // heartrate
+	}
+	//fmt.Printf("heartrate %d bpm\n", heartRate)
+	//printBinary(bytes)
 	return bytes
 }
