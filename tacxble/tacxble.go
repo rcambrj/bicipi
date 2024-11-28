@@ -17,6 +17,12 @@ func Start() {
 	ftmService := getFitnessMachineServiceDefinition()
 	must("declare FTMS service", adapter.AddService(&ftmService))
 
+	cyclingPowerService := getCyclingPowerServiceDefinition()
+	must("declare Cycling service", adapter.AddService(&cyclingPowerService))
+
+	cyclingSpeedAndCadenceService := getCyclingSpeedAndCadenceServiceDefinition()
+	must("declare Cycling service", adapter.AddService(&cyclingSpeedAndCadenceService))
+
 	adv := adapter.DefaultAdvertisement()
 	must("configure advertisement", adv.Configure(bluetooth.AdvertisementOptions{
 		LocalName: "Tacx BLE Trainer",

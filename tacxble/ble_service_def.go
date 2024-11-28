@@ -58,6 +58,70 @@ func getFitnessMachineServiceDefinition() bluetooth.Service {
 	return ftmService
 }
 
+func getCyclingSpeedAndCadenceServiceDefinition() bluetooth.Service {
+	service := bluetooth.Service{
+		UUID: bluetooth.ServiceUUIDCyclingSpeedAndCadence,
+		Characteristics: []bluetooth.CharacteristicConfig{
+			{
+				UUID: bluetooth.CharacteristicUUIDCSCMeasurement,
+				//Value: TODO
+				Value: []byte{0x00},
+				Flags: bluetooth.CharacteristicNotifyPermission,
+			},
+			{
+				UUID: bluetooth.CharacteristicUUIDCSCFeature,
+				//Value: TODO
+				Value: []byte{0x00},
+				Flags: bluetooth.CharacteristicReadPermission,
+			},
+			{
+				UUID: bluetooth.CharacteristicUUIDSensorLocation,
+				//Value: TODO
+				Value: []byte{0x00},
+				Flags: bluetooth.CharacteristicReadPermission,
+			},
+		},
+	}
+
+	return service
+}
+
+func getCyclingPowerServiceDefinition() bluetooth.Service {
+	service := bluetooth.Service{
+		UUID: bluetooth.ServiceUUIDCyclingPower,
+		Characteristics: []bluetooth.CharacteristicConfig{
+			{
+				UUID: bluetooth.CharacteristicUUIDCyclingPowerMeasurement,
+				//Value: TODO
+				Value: []byte{0x00},
+				Flags: bluetooth.CharacteristicNotifyPermission,
+			},
+			{
+				UUID: bluetooth.CharacteristicUUIDCyclingPowerFeature,
+				//Value: TODO
+				Value: []byte{0x00},
+				Flags: bluetooth.CharacteristicReadPermission,
+			},
+			{
+				UUID: bluetooth.CharacteristicUUIDSensorLocation,
+				//Value: TODO
+				Value: []byte{0x00},
+				Flags: bluetooth.CharacteristicReadPermission,
+			},
+			{
+				UUID: bluetooth.CharacteristicUUIDCyclingPowerControlPoint,
+				//Value: TODO
+				Flags: bluetooth.CharacteristicIndicatePermission | bluetooth.CharacteristicWritePermission,
+				WriteEvent: func(client bluetooth.Connection, offset int, value []byte) {
+					printBinary(value)
+				},
+			},
+		},
+	}
+
+	return service
+}
+
 func printBinary(bytes []byte) {
 	for _, n := range bytes {
 		fmt.Printf("%08b ", n) // prints 00000000 11111101
