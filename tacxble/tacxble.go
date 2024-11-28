@@ -26,6 +26,25 @@ func Start() {
 	adv := adapter.DefaultAdvertisement()
 	must("configure advertisement", adv.Configure(bluetooth.AdvertisementOptions{
 		LocalName: "Tacx BLE Trainer",
+		ServiceUUIDs: []bluetooth.UUID{
+			bluetooth.ServiceUUIDFitnessMachine,
+			bluetooth.ServiceUUIDCyclingPower,
+			bluetooth.ServiceUUIDCyclingSpeedAndCadence,
+		},
+		ServiceData: []bluetooth.ServiceDataElement{
+			{
+				UUID: bluetooth.ServiceUUIDFitnessMachine,
+				Data: []byte{0x0},
+			},
+			{
+				UUID: bluetooth.ServiceUUIDCyclingPower,
+				Data: []byte{0x0},
+			},
+			{
+				UUID: bluetooth.ServiceUUIDCyclingSpeedAndCadence,
+				Data: []byte{0x0},
+			},
+		},
 	}))
 
 	adapter.SetConnectHandler(handleConnect)
