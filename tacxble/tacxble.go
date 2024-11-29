@@ -2,7 +2,6 @@ package tacxble
 
 import (
 	"fmt"
-	"math/rand"
 	"time"
 
 	"tinygo.org/x/bluetooth"
@@ -15,28 +14,12 @@ func Start() {
 
 	must("enable BLE stack", adapter.Enable())
 
-	serviceUUIDs := []bluetooth.UUID{}
+	serviceManager := NewServiceManager()
 
-	ftmService := getFitnessMachineServiceDefinition()
-	must("declare FTMS service", adapter.AddService(&ftmService))
-	serviceUUIDs = append(serviceUUIDs, ftmService.UUID)
+	registerServices(&serviceManager)
 
-	cyclingPowerService := getCyclingPowerServiceDefinition()
-	must("declare Cycling service", adapter.AddService(&cyclingPowerService))
-	serviceUUIDs = append(serviceUUIDs, cyclingPowerService.UUID)
-
-	cyclingSpeedAndCadenceService := getCyclingSpeedAndCadenceServiceDefinition()
-	must("declare Cycling service", adapter.AddService(&cyclingSpeedAndCadenceService))
-	serviceUUIDs = append(serviceUUIDs, cyclingSpeedAndCadenceService.UUID)
-
-	cyclingSteeringService := getVirtualSteeringService()
-	must("declare Cycling service", adapter.AddService(&cyclingSteeringService))
-	serviceUUIDs = append(serviceUUIDs, cyclingSteeringService.UUID)
-
-	var heartRate bluetooth.Characteristic
-	heartRateService := getHeartRateService(&heartRate)
-	must("declare Cycling service", adapter.AddService(&heartRateService))
-	serviceUUIDs = append(serviceUUIDs, heartRateService.UUID)
+	serviceUUIDs := serviceManager.GetServiceIds()
+	must("register services", serviceManager.RegisterServices(adapter))
 
 	adv := adapter.DefaultAdvertisement()
 	must("configure advertisement", adv.Configure(bluetooth.AdvertisementOptions{
@@ -54,7 +37,21 @@ func Start() {
 
 	println("advertising BLE...")
 
-	startFakeHeartbeat(&heartRate)
+	writeFakeData(
+		"HeartRate",
+		&serviceManager,
+		bluetooth.ServiceUUIDHeartRate,
+		bluetooth.CharacteristicUUIDHeartRateMeasurement,
+		heartRateDataGenerator(),
+	)
+
+	writeFakeData(
+		"Cadence",
+		&serviceManager,
+		bluetooth.ServiceUUIDCyclingSpeedAndCadence,
+		bluetooth.CharacteristicUUIDCSCMeasurement,
+		cadenceDataGenerator(),
+	)
 
 	for {
 		// Sleep forever.
@@ -62,35 +59,31 @@ func Start() {
 	}
 }
 
-func startFakeHeartbeat(heartRate *bluetooth.Characteristic) chan bool {
-	var currentRate uint8 = 60
-	nextBeat := time.Now()
-	rateFluctuation := 10
+func registerServices(serviceManager *ServiceManager) {
+	must("declare HeartRate service", serviceManager.AddService(
+		bluetooth.ServiceUUIDHeartRate,
+		createHeartRateCharacteristics()...,
+	))
 
-	exitSignal := make(chan bool)
+	must("declare FTMS service", serviceManager.AddService(
+		bluetooth.ServiceUUIDFitnessMachine,
+		createFitnessMachineCharacteristics()...,
+	))
 
-	go func() {
-		for {
-			select {
-			case <-exitSignal:
-				fmt.Println("exiting heartbeat")
-				return
-			default:
-			}
+	must("declare Cycling Power service", serviceManager.AddService(
+		bluetooth.ServiceUUIDCyclingPower,
+		createCyclingPowerCharacteristics()...,
+	))
 
-			nextBeat = nextBeat.Add(time.Minute / time.Duration(currentRate))
-			fmt.Printf("heartbeat at %s\n", time.Now().Format(time.RFC3339Nano))
-			time.Sleep(nextBeat.Sub(time.Now()))
+	must("declare Cycling Speed and Cadence service", serviceManager.AddService(
+		bluetooth.ServiceUUIDCyclingSpeedAndCadence,
+		createCyclingSpeedCadenceCharacteristics()...,
+	))
 
-			rateOffset := rateFluctuation/2 - 1 - rand.Intn(rateFluctuation)
-			currentRate = uint8(min(max(int(currentRate)+rateOffset, 55), 110))
-
-			rateData := getHeartRate(currentRate)
-			heartRate.Write(rateData)
-		}
-	}()
-
-	return exitSignal
+	must("declare Cycling Steering service", serviceManager.AddService(
+		ServiceUUIDCyclingSteering,
+		createCyclingSteeringCharacteristics()...,
+	))
 }
 
 func must(action string, err error) {
