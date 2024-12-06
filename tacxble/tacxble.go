@@ -46,7 +46,7 @@ func Start() {
 	}
 	fmt.Printf("Sent %v bytes\n", n)
 
-	buff := make([]byte, 1)
+	buff := make([]byte, 64)
 	for {
 		n, err := port.Read(buff)
 		if err != nil {
@@ -57,7 +57,13 @@ func Start() {
 			fmt.Println("\nEOF")
 			break
 		}
-		fmt.Printf("%v", string(buff[:n]))
+		fmt.Printf("%v\n", string(buff[:n]))
+		response, err := DeserializeResponse(buff)
+		if err != nil {
+			fmt.Printf("unable to deserialize response: %v", err)
+		} else {
+			fmt.Printf("%v", response)
+		}
 	}
 
 	// //////////////////////////
