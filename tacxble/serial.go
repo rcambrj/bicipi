@@ -1,33 +1,38 @@
 package tacxble
 
-import "fmt"
+import (
+	"encoding/binary"
+	"fmt"
+)
 
-var startOfFrame = 0x01
-var endOfFrame = 0x17
+var startOfFrame byte = 0x01
+var endOfFrame byte = 0x17
 
 // converts the message
 // calculates a checksum and appends it
 // prepends start of frame
 // appends end of frame
 func SerializeCommand(message []byte) ([]byte, error) {
-	serialized := make([]byte, 4, 32)
+	serialized := make([]byte, 0, 36)
 	for _, b := range message {
-		for _, bshifted := range []byte{b >> 4, b >> 0} {
-			h, err := getHex(bshifted)
+		for _, nibble := range []byte{b >> 4 & 0xf, b >> 0 & 0xf} {
+			h, err := getHex(nibble)
 			if err != nil {
 				return nil, fmt.Errorf("unable to serialize command: %w", err)
 			}
-			serialized = append(serialized, h&0xf)
+			serialized = append(serialized, h)
 		}
 	}
 
 	checksum := getChecksum(serialized)
-	for _, bshifted := range []byte{checksum >> 4, checksum >> 0, checksum >> 12, checksum >> 8} {
-		h, err := getHex(bshifted)
+	for _, nibble := range []uint16{checksum >> 4 & 0xf, checksum >> 0 & 0xf, checksum >> 12 & 0xf, checksum >> 8 & 0xf} {
+		bytes := make([]byte, 2)
+		binary.LittleEndian.PutUint16(bytes, nibble)
+		h, err := getHex(bytes[0])
 		if err != nil {
 			return nil, fmt.Errorf("unable to serialize command: %w", err)
 		}
-		serialized = append(serialized, h&0xf)
+		serialized = append(serialized, h)
 	}
 
 	serialized = append([]byte{startOfFrame}, serialized...)
