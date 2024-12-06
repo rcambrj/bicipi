@@ -3,6 +3,7 @@ module github.com/rcambrj/tacxble
 go 1.23
 
 require (
+	github.com/creack/goselect v0.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
@@ -12,6 +13,7 @@ require (
 	github.com/soypat/seqs v0.0.0-20240527012110-1201bab640ef // indirect
 	github.com/tinygo-org/cbgo v0.0.4 // indirect
 	github.com/tinygo-org/pio v0.0.0-20231216154340-cd888eb58899 // indirect
+	go.bug.st/serial v1.6.2 // indirect
 	golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 	tinygo.org/x/bluetooth v0.10.0 // indirect
