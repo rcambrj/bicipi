@@ -35,7 +35,12 @@ func Start() {
 		log.Fatal(err)
 	}
 
-	n, err := port.Write([]byte{0x02, 0x00, 0x00, 0x00})
+	command, err := SerializeCommand([]byte{0x02, 0x00, 0x00, 0x00})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	n, err := port.Write(command)
 	if err != nil {
 		log.Fatal(err)
 	}
