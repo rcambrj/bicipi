@@ -5,28 +5,28 @@ import (
 	"testing"
 )
 
-func TestGetHex(t *testing.T) {
+func TestGetHexFromBin(t *testing.T) {
 	// Test cases where the function should succeed
 	cases := []struct {
 		Name  string
 		Input byte
 		Want  byte
 	}{
-		{"Zero should convert to '0'", 0, '0'},
-		{"Five should convert to '5'", 5, '5'},
-		{"Nine should convert to '9'", 9, '9'},
-		{"Ten should convert to 'A'", 10, 'A'},
-		{"Fifteen should convert to 'F'", 15, 'F'},
+		{"0 should convert to '0'", 0, '0'},
+		{"5 should convert to '5'", 5, '5'},
+		{"9 should convert to '9'", 9, '9'},
+		{"10 should convert to 'A'", 10, 'A'},
+		{"15 should convert to 'F'", 15, 'F'},
 	}
 
-	for _, c := range cases {
-		t.Run(c.Name, func(t *testing.T) {
-			got, err := getHex(c.Input)
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			got, err := getHexFromBin(tc.Input)
 			if err != nil {
-				t.Errorf("%s returned an error: %v", c.Name, err)
+				t.Errorf("%s returned an error: %v", tc.Name, err)
 			}
-			if got != c.Want {
-				t.Errorf("%s = %c, want %c", c.Name, got, c.Want)
+			if got != tc.Want {
+				t.Errorf("%s = %c, want %c", tc.Name, got, tc.Want)
 			}
 		})
 	}
@@ -35,18 +35,74 @@ func TestGetHex(t *testing.T) {
 	errorCases := []struct {
 		Name  string
 		Input byte
+		Error string
 	}{
-		{"Too high should error", 16},
+		{"Too high", 16, "only 4bit nibbles allowed"},
 	}
 
-	for _, c := range errorCases {
-		t.Run(c.Name, func(t *testing.T) {
-			_, err := getHex(c.Input)
+	for _, tc := range errorCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			_, err := getHexFromBin(tc.Input)
 			if err == nil {
-				t.Errorf("expected an error for %s, but got none", c.Name)
+				t.Errorf("expected an error for %s, but got none", tc.Name)
 			}
-			if err != nil && err.Error() != "only 4bit nibbles allowed" {
-				t.Errorf("wrong error message: got '%v' want 'only 4bit nibbles allowed'", err)
+			if err != nil && err.Error() != tc.Error {
+				t.Errorf("wrong error message: got '%v' want '%v'", err, tc.Error)
+			}
+		})
+	}
+}
+
+func TestGetBinFromHex(t *testing.T) {
+	// Test cases where the function should succeed
+	cases := []struct {
+		Name  string
+		Input byte
+		Want  byte
+	}{
+		{"'0' should convert to 0", '0', 0},
+		{"'5' should convert to 5", '5', 5},
+		{"'9 should convert to 9", '9', 9},
+		{"'A' should convert to 10", 'A', 10},
+		{"'F' should convert to 15", 'F', 15},
+		{"'a' should convert to 10", 'A', 10},
+		{"'a' should convert to 15", 'F', 15},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			got, err := getBinFromHex(tc.Input)
+			if err != nil {
+				t.Errorf("%s returned an error: %v", tc.Name, err)
+			}
+			if got != tc.Want {
+				t.Errorf("%s = %c, want %c", tc.Name, got, tc.Want)
+			}
+		})
+	}
+
+	// Test error cases
+	errorCases := []struct {
+		Name  string
+		Input byte
+		Error string
+	}{
+		{"char 01 outside range", 0x01, "only hex code characters allowed"},
+		{"char 29 outside range", 0x29, "only hex code characters allowed"},
+		{"char 47 outside range", 0x47, "only hex code characters allowed"},
+		{"char 60 outside range", 0x60, "only hex code characters allowed"},
+		{"char 67 outside range", 0x67, "only hex code characters allowed"},
+		{"char 99 outside range", 0x99, "only hex code characters allowed"},
+	}
+
+	for _, tc := range errorCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			_, err := getBinFromHex(tc.Input)
+			if err == nil {
+				t.Errorf("expected an error for %s, but got none", tc.Name)
+			}
+			if err != nil && err.Error() != tc.Error {
+				t.Errorf("wrong error message: got '%v' want '%v'", err, tc.Error)
 			}
 		})
 	}
@@ -120,4 +176,25 @@ func TestSerializeCommand(t *testing.T) {
 			t.Errorf("SerializeCommand(%#v) = %#v, %v; want %#v", tc.input, got, err, tc.want)
 		}
 	}
+}
+
+func TestDeserializeResponse(t *testing.T) {
+	type test struct {
+		input []byte
+		want  []byte
+	}
+
+	tests := []test{
+		{
+			input: []byte{0x01, 0x30, 0x33, 0x31, 0x33, 0x30, 0x32, 0x30, 0x30, 0x30, 0x46, 0x33, 0x39, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x42, 0x30, 0x35, 0x45, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x46, 0x38, 0x46, 0x44, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x32, 0x36, 0x31, 0x38, 0x31, 0x17},
+			want:  []byte{0x03, 0x13, 0x02, 0x00, 0x0f, 0x39, 0x00, 0x00, 0x00, 0x00, 0xb0, 0x5e, 0x00, 0x00, 0x00, 0x00, 0xf8, 0xfd, 0x00, 0x00, 0x00, 0x00, 0x02},
+		},
+	}
+	for _, tc := range tests {
+		if got, err := DeserializeResponse(tc.input); !reflect.DeepEqual(got, tc.want) || err != nil {
+			t.Errorf("DeserializeResponse(%#v) = %#v, %v; want %#v", tc.input, got, err, tc.want)
+		}
+	}
+
+	// TODO: test malformed messages
 }
