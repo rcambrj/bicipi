@@ -40,29 +40,31 @@ func Start(config Config) {
 		log.Fatal(fmt.Errorf("unable to open serial port: %w", err))
 	}
 
-	command, err := serializeCommand([]byte{0x02, 0x00, 0x00, 0x00})
+	command := []byte{0x02, 0x00, 0x00, 0x00}
+	log.Debugf("sending serial command: %v", command)
+	outFrame, err := serializeCommand(command)
 	if err != nil {
 		log.Fatal(fmt.Errorf("unable to serialize command: %w", err))
 	}
 
-	ch := make(chan []byte)
+	readChan := make(chan []byte)
 
 	// start reading before sending the first command
-	go read(ch, port)
+	go read(readChan, port)
 
 	port.ResetInputBuffer()
 
-	n, err := port.Write(command)
+	_, err = port.Write(outFrame)
 	if err != nil {
 		log.Fatal(fmt.Errorf("unable to write to serial port: %w", err))
 	}
-	log.Infof("sent serial command of %v bytes", n)
+	log.Debugf("sent serial data: %v", outFrame)
 
-	frame := waitForResponse(ch, port)
-	response, err := deserializeResponse(frame)
+	inFrame := waitForResponse(readChan, port)
+	response, err := deserializeResponse(inFrame)
 	if err != nil {
 		log.Warnf("unable to deserialize response: %v", err)
 	} else {
-		log.Debugf("received response: %v", response)
+		log.Debugf("received serial response: %v", response)
 	}
 }
