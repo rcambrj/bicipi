@@ -1,4 +1,4 @@
-package tacxble
+package bicipi
 
 import (
 	"fmt"
@@ -7,6 +7,9 @@ import (
 
 	"go.bug.st/serial"
 	"tinygo.org/x/bluetooth"
+
+	"github.com/rcambrj/tacxble/ftms"
+	"github.com/rcambrj/tacxble/tacx"
 )
 
 func Start() {
@@ -35,7 +38,7 @@ func Start() {
 		log.Fatal(err)
 	}
 
-	command, err := SerializeCommand([]byte{0x02, 0x00, 0x00, 0x00})
+	command, err := tacx.SerializeCommand([]byte{0x02, 0x00, 0x00, 0x00})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -58,7 +61,7 @@ func Start() {
 			break
 		}
 		fmt.Printf("%v\n", string(buff[:n]))
-		response, err := DeserializeResponse(buff)
+		response, err := tacx.DeserializeResponse(buff)
 		if err != nil {
 			fmt.Printf("unable to deserialize response: %v", err)
 		} else {
@@ -72,7 +75,7 @@ func Start() {
 
 	must("enable BLE stack", adapter.Enable())
 
-	serviceManager := NewServiceManager()
+	serviceManager := ftms.NewServiceManager()
 
 	registerServices(&serviceManager)
 
@@ -95,20 +98,20 @@ func Start() {
 
 	println("advertising BLE...")
 
-	writeFakeData(
+	ftms.WriteFakeData(
 		"HeartRate",
 		&serviceManager,
 		bluetooth.ServiceUUIDHeartRate,
 		bluetooth.CharacteristicUUIDHeartRateMeasurement,
-		heartRateDataGenerator(),
+		ftms.HeartRateDataGenerator(),
 	)
 
-	writeFakeData(
+	ftms.WriteFakeData(
 		"Cadence",
 		&serviceManager,
 		bluetooth.ServiceUUIDCyclingSpeedAndCadence,
 		bluetooth.CharacteristicUUIDCSCMeasurement,
-		cadenceDataGenerator(),
+		ftms.CadenceDataGenerator(),
 	)
 
 	for {
@@ -117,30 +120,30 @@ func Start() {
 	}
 }
 
-func registerServices(serviceManager *ServiceManager) {
+func registerServices(serviceManager *ftms.ServiceManager) {
 	must("declare HeartRate service", serviceManager.AddService(
 		bluetooth.ServiceUUIDHeartRate,
-		createHeartRateCharacteristics()...,
+		ftms.CreateHeartRateCharacteristics()...,
 	))
 
 	must("declare FTMS service", serviceManager.AddService(
 		bluetooth.ServiceUUIDFitnessMachine,
-		createFitnessMachineCharacteristics()...,
+		ftms.CreateFitnessMachineCharacteristics()...,
 	))
 
 	must("declare Cycling Power service", serviceManager.AddService(
 		bluetooth.ServiceUUIDCyclingPower,
-		createCyclingPowerCharacteristics()...,
+		ftms.CreateCyclingPowerCharacteristics()...,
 	))
 
 	must("declare Cycling Speed and Cadence service", serviceManager.AddService(
 		bluetooth.ServiceUUIDCyclingSpeedAndCadence,
-		createCyclingSpeedCadenceCharacteristics()...,
+		ftms.CreateCyclingSpeedCadenceCharacteristics()...,
 	))
 
 	must("declare Cycling Steering service", serviceManager.AddService(
-		ServiceUUIDCyclingSteering,
-		createCyclingSteeringCharacteristics()...,
+		ftms.ServiceUUIDCyclingSteering,
+		ftms.CreateCyclingSteeringCharacteristics()...,
 	))
 }
 

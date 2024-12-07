@@ -1,8 +1,8 @@
-package tacxble
+package ftms
 
 import "tinygo.org/x/bluetooth"
 
-func createCyclingPowerCharacteristics() []bluetooth.CharacteristicConfig {
+func CreateCyclingPowerCharacteristics() []bluetooth.CharacteristicConfig {
 	return []bluetooth.CharacteristicConfig{
 		{
 			UUID: bluetooth.CharacteristicUUIDCyclingPowerMeasurement,

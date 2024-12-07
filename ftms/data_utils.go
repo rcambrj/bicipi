@@ -1,4 +1,4 @@
-package tacxble
+package ftms
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ func formatBinary(bytes []byte) string {
 
 type WriteValue = func() []byte
 
-func writeFakeData(
+func WriteFakeData(
 	name string,
 	serviceManager *ServiceManager,
 	serviceUUID bluetooth.UUID,

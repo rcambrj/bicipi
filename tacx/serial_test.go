@@ -1,4 +1,4 @@
-package tacxble
+package tacx
 
 import (
 	"reflect"

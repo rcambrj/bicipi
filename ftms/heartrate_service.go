@@ -1,4 +1,4 @@
-package tacxble
+package ftms
 
 import (
 	"math/rand"
@@ -6,7 +6,7 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-func createHeartRateCharacteristics() []bluetooth.CharacteristicConfig {
+func CreateHeartRateCharacteristics() []bluetooth.CharacteristicConfig {
 	return []bluetooth.CharacteristicConfig{
 		{
 			UUID:  bluetooth.CharacteristicUUIDHeartRateMeasurement,
@@ -22,7 +22,7 @@ func createHeartRateCharacteristics() []bluetooth.CharacteristicConfig {
 	}
 }
 
-func heartRateDataGenerator() WriteValue {
+func HeartRateDataGenerator() WriteValue {
 	var currentRate uint8 = 60
 	rateFluctuation := 10
 

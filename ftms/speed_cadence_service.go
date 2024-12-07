@@ -1,4 +1,4 @@
-package tacxble
+package ftms
 
 import (
 	"math/rand"
@@ -6,7 +6,7 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-func createCyclingSpeedCadenceCharacteristics() []bluetooth.CharacteristicConfig {
+func CreateCyclingSpeedCadenceCharacteristics() []bluetooth.CharacteristicConfig {
 	return []bluetooth.CharacteristicConfig{
 		{
 			UUID: bluetooth.CharacteristicUUIDCSCMeasurement,
@@ -29,7 +29,7 @@ func createCyclingSpeedCadenceCharacteristics() []bluetooth.CharacteristicConfig
 	}
 }
 
-func cadenceDataGenerator() WriteValue {
+func CadenceDataGenerator() WriteValue {
 	var currentRate uint8 = 60
 	rateFluctuation := 10
 

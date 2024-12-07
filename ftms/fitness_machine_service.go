@@ -1,4 +1,4 @@
-package tacxble
+package ftms
 
 import (
 	"encoding/binary"
@@ -7,7 +7,7 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-func createFitnessMachineCharacteristics() []bluetooth.CharacteristicConfig {
+func CreateFitnessMachineCharacteristics() []bluetooth.CharacteristicConfig {
 	return []bluetooth.CharacteristicConfig{
 		{
 			UUID:  bluetooth.CharacteristicUUIDFitnessMachineFeature,

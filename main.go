@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/rcambrj/tacxble/tacxble"
+	"github.com/rcambrj/tacxble/bicipi"
 )
 
 func main() {
-	tacxble.Start()
+	bicipi.Start()
 }

@@ -1,4 +1,4 @@
-package tacxble
+package tacx
 
 import (
 	"encoding/binary"
