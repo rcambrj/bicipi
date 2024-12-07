@@ -1,26 +1,25 @@
 package bicipi
 
 import (
-	"fmt"
-	"log"
 	"time"
 
-	"github.com/rcambrj/tacxble/ftms"
 	"github.com/rcambrj/tacxble/tacx"
+	log "github.com/sirupsen/logrus"
 )
 
-type StartConfig struct {
+type Config struct {
 	SerialDevice    string
 	BluetoothDevice string
-	Logger          *log.Logger
 }
 
-func Start(config StartConfig) {
-	fmt.Println("starting...")
+func Start(config Config) {
+	log.Info("starting...")
 
-	tacx.Start()
+	tacx.Start(tacx.Config{
+		Device: config.SerialDevice,
+	})
 	// TODO: wait for tacx to be ready then advertise FTMS
-	ftms.Start()
+	// ftms.Start()
 
 	for {
 		// Sleep forever.

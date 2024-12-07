@@ -3,6 +3,8 @@ package tacx
 import (
 	"encoding/binary"
 	"fmt"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var startOfFrame byte = 0x01
@@ -12,7 +14,7 @@ var endOfFrame byte = 0x17
 // calculates a checksum and appends it
 // prepends start of frame
 // appends end of frame
-func SerializeCommand(message []byte) ([]byte, error) {
+func serializeCommand(message []byte) ([]byte, error) {
 	serialized := make([]byte, 0, 30)
 	for _, b := range message {
 		for _, nibble := range []byte{b >> 4 & 0xf, b >> 0 & 0xf} {
@@ -49,7 +51,7 @@ func getParity16(b uint16) int {
 }
 
 func getHexFromBin(b byte) (byte, error) {
-	if b >= 0 && b < 10 {
+	if b < 10 {
 		return b + 0x30, nil // '0'
 	} else if b >= 10 && b < 16 {
 		return b - 10 + 0x41, nil // 'A'
@@ -92,9 +94,9 @@ func getChecksum(buffer []byte) uint16 {
 	return shiftreg
 }
 
-func DeserializeResponse(response []byte) ([]byte, error) {
+func deserializeResponse(response []byte) ([]byte, error) {
 	l := len(response)
-	if len(response) < 6 || response[0] != startOfFrame || response[l-1] != endOfFrame {
+	if !isValidFrame(response) {
 		return []byte{}, fmt.Errorf("invalid frame")
 	}
 
@@ -120,12 +122,10 @@ func DeserializeResponse(response []byte) ([]byte, error) {
 	checksumReceived := getChecksum(response[1 : l-5])
 	checksumMatches := checksumReceived == checksumCalculated
 
-	fmt.Printf("checksum: matches %v received %#v calculated %#v", checksumMatches, checksumReceived, checksumCalculated)
+	log.Debugf("checksum: matches %v received %#v calculated %#v", checksumMatches, checksumReceived, checksumCalculated)
 	if !checksumMatches {
 		return []byte{}, fmt.Errorf("checksum does not match")
 	}
-
-	// message := response[1:-5]
 
 	deserialized := make([]byte, 0, 32)
 	for i := range response[1 : l-5] {
@@ -144,4 +144,8 @@ func DeserializeResponse(response []byte) ([]byte, error) {
 	}
 
 	return deserialized, nil
+}
+
+func isValidFrame(frame []byte) bool {
+	return len(frame) >= 6 && frame[0] == startOfFrame && frame[len(frame)-1] == endOfFrame
 }

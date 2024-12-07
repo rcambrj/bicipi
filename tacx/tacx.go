@@ -2,23 +2,32 @@ package tacx
 
 import (
 	"fmt"
-	"log"
 
+	log "github.com/sirupsen/logrus"
 	"go.bug.st/serial"
 )
 
-func Start() {
-	ports, err := serial.GetPortsList()
-	must("get ports list", err)
-	if len(ports) == 0 {
-		log.Fatal("No serial ports found!")
+type Config struct {
+	Device string
+}
+
+func Start(config Config) {
+	var device string
+
+	if config.Device != "" {
+		device = config.Device
+	} else {
+		log.Info("searching for serial ports...")
+		devices, err := serial.GetPortsList()
+		if err != nil {
+			log.Fatalf("unable to list serial ports: %v", err)
+		}
+		if len(devices) == 0 {
+			log.Fatal("no serial ports found")
+		}
+		device = devices[0]
 	}
-	for _, port := range ports {
-		fmt.Printf("Found port: %v\n", port)
-	}
-	if len(ports) > 1 {
-		log.Fatal("Found more than one port. TODO: allow specifying port on cli")
-	}
+	log.Infof("connecting to serial port %v...", device)
 
 	mode := &serial.Mode{
 		BaudRate: 19200,
@@ -26,46 +35,34 @@ func Start() {
 		DataBits: 8,
 		StopBits: serial.OneStopBit,
 	}
-	port, err := serial.Open(ports[0], mode)
+	port, err := serial.Open(device, mode)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Errorf("unable to open serial port: %w", err))
 	}
 
-	command, err := SerializeCommand([]byte{0x02, 0x00, 0x00, 0x00})
+	command, err := serializeCommand([]byte{0x02, 0x00, 0x00, 0x00})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Errorf("unable to serialize command: %w", err))
 	}
+
+	ch := make(chan []byte)
+
+	// start reading before sending the first command
+	go read(ch, port)
+
+	port.ResetInputBuffer()
 
 	n, err := port.Write(command)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Errorf("unable to write to serial port: %w", err))
 	}
-	fmt.Printf("Sent %v bytes\n", n)
+	log.Infof("sent serial command of %v bytes", n)
 
-	buff := make([]byte, 64)
-	for {
-		n, err := port.Read(buff)
-		if err != nil {
-			log.Fatal(err)
-			break
-		}
-		if n == 0 {
-			fmt.Println("\nEOF")
-			break
-		}
-		fmt.Printf("%v\n", string(buff[:n]))
-		response, err := DeserializeResponse(buff)
-		if err != nil {
-			fmt.Printf("unable to deserialize response: %v", err)
-		} else {
-			fmt.Printf("%v", response)
-		}
-	}
-
-}
-
-func must(action string, err error) {
+	frame := waitForResponse(ch, port)
+	response, err := deserializeResponse(frame)
 	if err != nil {
-		panic("failed to " + action + ": " + err.Error())
+		log.Warnf("unable to deserialize response: %v", err)
+	} else {
+		log.Debugf("received response: %v", response)
 	}
 }

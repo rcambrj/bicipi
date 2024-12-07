@@ -172,7 +172,7 @@ func TestSerializeCommand(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		if got, err := SerializeCommand(tc.input); !reflect.DeepEqual(got, tc.want) || err != nil {
+		if got, err := serializeCommand(tc.input); !reflect.DeepEqual(got, tc.want) || err != nil {
 			t.Errorf("SerializeCommand(%#v) = %#v, %v; want %#v", tc.input, got, err, tc.want)
 		}
 	}
@@ -191,7 +191,7 @@ func TestDeserializeResponse(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		if got, err := DeserializeResponse(tc.input); !reflect.DeepEqual(got, tc.want) || err != nil {
+		if got, err := deserializeResponse(tc.input); !reflect.DeepEqual(got, tc.want) || err != nil {
 			t.Errorf("DeserializeResponse(%#v) = %#v, %v; want %#v", tc.input, got, err, tc.want)
 		}
 	}
