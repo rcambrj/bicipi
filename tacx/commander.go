@@ -150,7 +150,7 @@ func isValidFrame(frame []byte) bool {
 	return len(frame) >= 6 && frame[0] == startOfFrame && frame[len(frame)-1] == endOfFrame
 }
 
-// https://pkg.go.dev/go.bug.st/serial#Port
+// mimics https://pkg.go.dev/go.bug.st/serial#Port
 type SerialPort interface {
 	ResetInputBuffer() error
 	Read(p []byte) (n int, err error)
@@ -215,7 +215,7 @@ func (c *C) sendCommand(command []byte) ([]byte, error) {
 	if err != nil {
 		return []byte{}, fmt.Errorf("unable to write to serial port: %w", err)
 	}
-	log.Debugf("sent serial data: %v", outFrame)
+	log.Debugf("sent serial frame: %v", outFrame)
 
 	inFrame, err := getResponse(c.port)
 	if err != nil {
