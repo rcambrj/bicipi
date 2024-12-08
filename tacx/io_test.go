@@ -5,30 +5,28 @@ import (
 	"testing"
 )
 
-type mockSerialPort struct {
-	mockRead []byte
+type mockCommander struct {
+	mockSendCommandOut []byte
+	mockSendCommandErr error
 }
 
-func (port mockSerialPort) ResetInputBuffer() error {
-	return nil
-}
-func (port mockSerialPort) Read(p []byte) (n int, err error) {
-	copy(p, port.mockRead)
-	return len(port.mockRead), nil
-}
-func (port mockSerialPort) Write(p []byte) (n int, err error) {
-	return 0, nil
+func (c *mockCommander) sendCommand(command []byte) ([]byte, error) {
+	return c.mockSendCommandOut, c.mockSendCommandErr
 }
 
 func TestGetVersion(t *testing.T) {
 	type test struct {
-		response []byte
-		want     Version
+		description string
+		response    []byte
+		error       error
+		want        Version
 	}
 
 	tests := []test{
 		{
-			response: []byte{0x01, 0x30, 0x33, 0x31, 0x33, 0x30, 0x32, 0x30, 0x30, 0x30, 0x46, 0x33, 0x39, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x42, 0x30, 0x35, 0x45, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x46, 0x38, 0x46, 0x44, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x32, 0x36, 0x31, 0x38, 0x31, 0x17},
+			description: "valid",
+			response:    []byte{0x03, 0x0c, 0x00, 0x00, 0x07, 0x10, 0x00, 0x00, 0xae, 0x25, 0x7e, 0x18, 0x15, 0x08, 0x00, 0x00},
+			error:       nil,
 			want: Version{
 				Model:             "T1941",
 				ManufactureYear:   2009,
@@ -41,12 +39,13 @@ func TestGetVersion(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		port := mockSerialPort{
-			mockRead: tc.response,
+		mc := &mockCommander{
+			mockSendCommandOut: tc.response,
+			mockSendCommandErr: tc.error,
 		}
 
-		if got, err := getVersion(port); !reflect.DeepEqual(got, tc.want) || err != nil {
-			t.Errorf("getVersion() serial => %#v = %#v, %v; want %#v", tc.response, got, err, tc.want)
+		if got, err := getVersion(mc); !reflect.DeepEqual(got, tc.want) || err != nil {
+			t.Errorf("getVersion() [%v] => %#v, %v; want %#v", tc.description, got, err, tc.want)
 		}
 	}
 }

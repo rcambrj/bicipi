@@ -149,3 +149,83 @@ func deserializeResponse(response []byte) ([]byte, error) {
 func isValidFrame(frame []byte) bool {
 	return len(frame) >= 6 && frame[0] == startOfFrame && frame[len(frame)-1] == endOfFrame
 }
+
+// https://pkg.go.dev/go.bug.st/serial#Port
+type SerialPort interface {
+	ResetInputBuffer() error
+	Read(p []byte) (n int, err error)
+	Write(p []byte) (n int, err error)
+}
+
+func readSerial(port SerialPort) ([]byte, error) {
+	buff := make([]byte, 64)
+	n, err := port.Read(buff)
+	if err != nil {
+		return []byte{}, err
+	}
+	return buff[:n], nil
+}
+
+func getResponse(port SerialPort) ([]byte, error) {
+	var frame = make([]byte, 0, 64)
+	tries := 3
+	for {
+		extra, err := readSerial(port)
+		if err != nil {
+			return []byte{}, fmt.Errorf("unable to read from serial port: %w", err)
+		}
+		frame = append(frame, extra...)
+
+		if !isValidFrame(frame) {
+			if tries == 0 {
+				return []byte{}, fmt.Errorf("no serial response received")
+			}
+			log.Debugf("received partial frame: %v", frame)
+			tries--
+			continue
+		}
+
+		log.Debugf("received whole frame: %v", frame)
+		return frame, nil
+	}
+}
+
+type Commander interface {
+	sendCommand(command []byte) ([]byte, error)
+}
+
+func makeCommander(port SerialPort) Commander {
+	return &C{port}
+}
+
+type C struct {
+	port SerialPort
+}
+
+func (c *C) sendCommand(command []byte) ([]byte, error) {
+	log.Debugf("sending serial command: %v", command)
+	outFrame, err := serializeCommand(command)
+	if err != nil {
+		return []byte{}, fmt.Errorf("unable to serialize command: %w", err)
+	}
+
+	c.port.ResetInputBuffer()
+
+	_, err = c.port.Write(outFrame)
+	if err != nil {
+		return []byte{}, fmt.Errorf("unable to write to serial port: %w", err)
+	}
+	log.Debugf("sent serial data: %v", outFrame)
+
+	inFrame, err := getResponse(c.port)
+	if err != nil {
+		return []byte{}, fmt.Errorf("unable to read from serial port: %w", err)
+	}
+	response, err := deserializeResponse(inFrame)
+	if err != nil {
+		return []byte{}, fmt.Errorf("unable to deserialize response: %w", err)
+	}
+
+	log.Debugf("received serial response: %v", response)
+	return response, nil
+}

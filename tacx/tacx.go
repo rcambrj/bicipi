@@ -45,9 +45,11 @@ func Start(config Config) {
 		log.Fatal(fmt.Errorf("unable to configure serial timeout: %w", err))
 	}
 
-	version, err := getVersion(port)
+	commander := makeCommander(port)
+
+	version, err := getVersion(commander)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Infof("version: %+v", version)
+	log.Infof("done %+v", version)
 }
