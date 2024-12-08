@@ -11,7 +11,7 @@ type Version struct {
 	ManufactureYear   int
 	ManufactureNumber int
 	FirmwareVersion   string
-	Serial            uint32
+	Serial            int32
 	Date              string
 	Other             string
 }
@@ -26,7 +26,7 @@ func getVersion(t Commander) (Version, error) {
 	firmwareVersion := fmt.Sprintf("%02X.%02X.%02X.%02X", response[7], response[6], response[5], response[4])
 	date := fmt.Sprintf("%02X-%02X", response[13], response[12])
 	other := fmt.Sprintf("%02X.%02X", response[15], response[14])
-	serial := uint32(response[8]) | uint32(response[9])<<8 | uint32(response[10])<<16 | uint32(response[11])<<24
+	serial := int32(response[8]) | int32(response[9])<<8 | int32(response[10])<<16 | int32(response[11])<<24
 	// serial-based properties
 	manufactureYear := 2000 + int(serial/100000%100)
 	manufactureNumber := int(serial % 100000)
