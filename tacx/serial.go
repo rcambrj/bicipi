@@ -39,6 +39,10 @@ func connect(device string) (serial.Port, error) {
 	// when there is no data being received. this shouldn't happen under normal
 	// operation because port.Read() should not be called again once a valid
 	// frame has been identified (start of frame byte ... end of frame byte)
+	//
+	// a pair of frames (send+receive) will be exchanged within 50ms, with
+	// practically imperceptible delay between send and receive. so this can be
+	// set quite low.
 	err = port.SetReadTimeout(10 * time.Millisecond)
 	if err != nil {
 		return nil, fmt.Errorf("unable to configure serial timeout: %w", err)
