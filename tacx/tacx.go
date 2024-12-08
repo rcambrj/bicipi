@@ -2,6 +2,7 @@ package tacx
 
 import (
 	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"go.bug.st/serial"
@@ -39,32 +40,14 @@ func Start(config Config) {
 	if err != nil {
 		log.Fatal(fmt.Errorf("unable to open serial port: %w", err))
 	}
-
-	command := []byte{0x02, 0x00, 0x00, 0x00}
-	log.Debugf("sending serial command: %v", command)
-	outFrame, err := serializeCommand(command)
+	err = port.SetReadTimeout(100 * time.Millisecond)
 	if err != nil {
-		log.Fatal(fmt.Errorf("unable to serialize command: %w", err))
+		log.Fatal(fmt.Errorf("unable to configure serial timeout: %w", err))
 	}
 
-	readChan := make(chan []byte)
-
-	// start reading before sending the first command
-	go read(readChan, port)
-
-	port.ResetInputBuffer()
-
-	_, err = port.Write(outFrame)
+	version, err := getVersion(port)
 	if err != nil {
-		log.Fatal(fmt.Errorf("unable to write to serial port: %w", err))
+		log.Fatal(err)
 	}
-	log.Debugf("sent serial data: %v", outFrame)
-
-	inFrame := waitForResponse(readChan, port)
-	response, err := deserializeResponse(inFrame)
-	if err != nil {
-		log.Warnf("unable to deserialize response: %v", err)
-	} else {
-		log.Debugf("received serial response: %v", response)
-	}
+	log.Infof("version: %+v", version)
 }
