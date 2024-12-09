@@ -10,13 +10,15 @@ import (
 type Config struct {
 	SerialDevice    string
 	BluetoothDevice string
+	Calibrate       bool
 }
 
 func Start(config Config) {
 	log.Info("starting...")
 
 	tacx.Start(tacx.Config{
-		Device: config.SerialDevice,
+		Device:    config.SerialDevice,
+		Calibrate: config.Calibrate,
 	})
 	// TODO: wait for tacx to be ready then advertise FTMS
 	// ftms.Start()

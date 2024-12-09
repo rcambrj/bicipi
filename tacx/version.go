@@ -6,40 +6,40 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Version struct {
-	Model             string
-	ManufactureYear   int
-	ManufactureNumber int
-	FirmwareVersion   string
-	Serial            int32
-	Date              string
-	Other             string
+type version struct {
+	model             string
+	manufactureYear   int
+	manufactureNumber int
+	firmwareVersion   string
+	serial            int32
+	date              string
+	other             string
 }
 
-func getVersion(t Commander) (Version, error) {
+func getVersion(t Commander) (version, error) {
 	log.Info("requesting tacx version...")
 	response, err := t.sendCommand([]byte{0x02, 0x00, 0x00, 0x00})
 	if err != nil {
-		return Version{}, fmt.Errorf("unable to get version: %w", err)
+		return version{}, fmt.Errorf("unable to get version: %w", err)
 	}
 
 	firmwareVersion := fmt.Sprintf("%02X.%02X.%02X.%02X", response[7], response[6], response[5], response[4])
+	serial := int32(response[8]) | int32(response[9])<<8 | int32(response[10])<<16 | int32(response[11])<<24
 	date := fmt.Sprintf("%02X-%02X", response[13], response[12])
 	other := fmt.Sprintf("%02X.%02X", response[15], response[14])
-	serial := int32(response[8]) | int32(response[9])<<8 | int32(response[10])<<16 | int32(response[11])<<24
 	// serial-based properties
 	manufactureYear := 2000 + int(serial/100000%100)
 	manufactureNumber := int(serial % 100000)
 	model := fmt.Sprintf("T19%v", int(serial/10000000))
 
-	version := Version{
-		Model:             model,
-		ManufactureYear:   manufactureYear,
-		ManufactureNumber: manufactureNumber,
-		FirmwareVersion:   firmwareVersion,
-		Serial:            serial,
-		Date:              date,
-		Other:             other,
+	version := version{
+		model:             model,
+		manufactureYear:   manufactureYear,
+		manufactureNumber: manufactureNumber,
+		firmwareVersion:   firmwareVersion,
+		serial:            serial,
+		date:              date,
+		other:             other,
 	}
 	log.Infof("received tacx version: %+v", version)
 	return version, nil
