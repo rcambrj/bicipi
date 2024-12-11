@@ -7,12 +7,12 @@ import (
 )
 
 type controlCommand struct {
-	targetLoad  float64 // newtons (for modeRunning)
+	targetLoad  float64 // newtons (for modeNormal)
 	targetSpeed float64 // km/h (for modeCalibrating)
 	keepalive   uint8   // value from the last response
-	mode        mode    // see const
+	mode        mode    // see const `mode`
 	weight      uint8   // kg
-	adjust      int8    // adjustment -8...+8
+	adjust      uint16  // adjustment resulting from calibration
 }
 
 type controlCommandRaw struct {
@@ -63,13 +63,14 @@ type controlResponseRaw struct {
 }
 
 type controlResponse struct {
-	distance    float64 // km
-	speed       float64 // km/h
-	averageLoad float64 // newtons
-	currentLoad float64 // newtons
-	targetLoad  float64 // newtons
-	keepalive   uint8   // value to send in the next control
-	cadence     uint8   // rpm
+	distance    float64            // km?
+	speed       float64            // km/h
+	averageLoad float64            // newtons
+	currentLoad float64            // newtons
+	targetLoad  float64            // newtons
+	keepalive   uint8              // value to send in the next control
+	cadence     uint8              // rpm
+	raw         controlResponseRaw // needed for some things like calibration
 }
 
 // this is the main function to send and receive data from tacx
@@ -78,7 +79,7 @@ func sendControl(t Commander, command controlCommand) (controlResponse, error) {
 	log.Infof("sending tacx status: %+v", command)
 
 	var target uint16
-	if command.mode == modeRunning {
+	if command.mode == modeNormal {
 		target = getRawLoad(command.targetLoad)
 	}
 	if command.mode == modeCalibrating {
@@ -90,7 +91,7 @@ func sendControl(t Commander, command controlCommand) (controlResponse, error) {
 		keepalive: command.keepalive,
 		mode:      command.mode,
 		weight:    command.weight,
-		adjust:    getRawAdjust(command.adjust),
+		adjust:    command.adjust,
 	}
 	log.Debugf("sending tacx status raw: %+v", commandRaw)
 
@@ -112,6 +113,7 @@ func sendControl(t Commander, command controlCommand) (controlResponse, error) {
 		targetLoad:  getNewtons(responseRaw.targetLoad),
 		keepalive:   responseRaw.keepalive,
 		cadence:     responseRaw.cadence,
+		raw:         responseRaw,
 	}
 	log.Infof("received tacx status: %+v", response)
 	return response, nil

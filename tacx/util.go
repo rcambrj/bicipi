@@ -5,7 +5,7 @@ type mode uint8
 const (
 	modeOff mode = iota
 	_            // 1 is unused
-	modeRunning
+	modeNormal
 	modeCalibrating
 )
 
@@ -39,4 +39,12 @@ func getRawAdjust(v int8) uint16 {
 }
 func getNiceAdjust(v uint16) int16 {
 	return int16(v)/130 - 8
+}
+
+func getMeanAverageUint16(list []uint16) float64 {
+	var total uint16 = 0
+	for _, num := range list {
+		total += num
+	}
+	return float64(total) / float64(len(list))
 }

@@ -15,6 +15,7 @@ func main() {
 	bluetoothDevice := flag.String("bluetooth", "", "The bluetooth device on which the FTMS will be advertised. (default is first one found)")
 	logLevel := flag.String("loglevel", "info", fmt.Sprintf("The log level. May be one of %v.", logLevels))
 	calibrate := flag.Bool("calibrate", true, "Whether to enable initial calibration. Defaults to true.") // --calibrate=false
+	slow := flag.Bool("slow", false, "Whether to poll slowly so that logs are easier to follow.")
 	flag.Parse()
 
 	validLogLevel, err := log.ParseLevel(*logLevel)
@@ -27,6 +28,7 @@ func main() {
 		SerialDevice:    *serialDevice,
 		BluetoothDevice: *bluetoothDevice,
 		Calibrate:       *calibrate,
+		Slow:            *slow,
 	}
 
 	bicipi.Start(config)

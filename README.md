@@ -29,6 +29,12 @@ That said, WouterJD is still maintaining FortiusAnt, so if you're looking for a 
 
 ## Useful links and credits
 
+This project is almost entirely based on the hard work by totalreverse and WouterJD. Big thanks to them for their time and effort.
+
+* [BLE FTMS profile](https://www.bluetooth.com/specifications/specs/fitness-machine-profile-1-0/)
 * https://github.com/totalreverse/ttyT1941
 * https://github.com/WouterJD/FortiusANT
-* https://www.bluetooth.com/specifications/specs/fitness-machine-profile-1-0/
+* https://github.com/GoldenCheetah/GoldenCheetah/blob/80ba6ea06a6fdd5a951b028e1baf6a9810613ca0/src/Train/Fortius.h#L208
+* https://github.com/WouterJD/FortiusANT/issues/171#issuecomment-748359469
+* http://www.kreuzotter.de/english/espeed.htm
+* https://www.gribble.org/cycling/power_v_speed.html
