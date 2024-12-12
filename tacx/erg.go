@@ -10,7 +10,7 @@ var rawLoadFactor = 128866.0
 
 // the speed above which watts are applied correctly
 // below this speed, the T1941 doesn't behave very well
-var transitionSpeed uint16 = 6000
+var transitionSpeed uint16 = 4636
 
 // given a desired wattage, calculates the load which should be sent to the
 // trainer. also:

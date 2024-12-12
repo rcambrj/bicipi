@@ -48,7 +48,7 @@ func TestGetTargetLoad(t *testing.T) {
 				targetWatts:  100,
 				currentSpeed: 1000,
 			},
-			wantOut: 357,
+			wantOut: 599,
 			wantErr: nil,
 		},
 		{
@@ -57,7 +57,7 @@ func TestGetTargetLoad(t *testing.T) {
 				targetWatts:  100,
 				currentSpeed: 2000,
 			},
-			wantOut: 715,
+			wantOut: 1199,
 			wantErr: nil,
 		},
 		{
@@ -66,7 +66,7 @@ func TestGetTargetLoad(t *testing.T) {
 				targetWatts:  100,
 				currentSpeed: 4000,
 			},
-			wantOut: 1431,
+			wantOut: 2398,
 			wantErr: nil,
 		},
 		{
