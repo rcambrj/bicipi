@@ -8,25 +8,27 @@ import (
 )
 
 type Config struct {
-	SerialDevice     string
-	BluetoothDevice  string
-	Calibrate        bool
-	Slow             bool
-	CalibrationSpeed int
-	CalibrationMin   int
-	CalibrationMax   int
+	SerialDevice         string
+	BluetoothDevice      string
+	Calibrate            bool
+	Slow                 bool
+	CalibrationSpeed     int
+	CalibrationMin       int
+	CalibrationMax       int
+	CalibrationTolerance int
 }
 
 func Start(config Config) {
 	log.Info("starting...")
 
 	tacx.Start(tacx.Config{
-		Device:           config.SerialDevice,
-		Calibrate:        config.Calibrate,
-		Slow:             config.Slow,
-		CalibrationSpeed: config.CalibrationSpeed,
-		CalibrationMin:   config.CalibrationMin,
-		CalibrationMax:   config.CalibrationMax,
+		Device:               config.SerialDevice,
+		Calibrate:            config.Calibrate,
+		Slow:                 config.Slow,
+		CalibrationSpeed:     config.CalibrationSpeed,
+		CalibrationMin:       config.CalibrationMin,
+		CalibrationMax:       config.CalibrationMax,
+		CalibrationTolerance: config.CalibrationTolerance,
 	})
 	// TODO: wait for tacx to be ready then advertise FTMS
 	// ftms.Start()

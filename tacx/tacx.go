@@ -8,12 +8,13 @@ import (
 )
 
 type Config struct {
-	Device           string
-	Calibrate        bool
-	Slow             bool
-	CalibrationSpeed int
-	CalibrationMin   int
-	CalibrationMax   int
+	Device               string
+	Calibrate            bool
+	Slow                 bool
+	CalibrationSpeed     int
+	CalibrationMin       int
+	CalibrationMax       int
+	CalibrationTolerance int
 }
 
 func Start(config Config) {
@@ -58,7 +59,7 @@ func Start(config Config) {
 	var calibrating = config.Calibrate
 	var calibrationStartedAt time.Time
 	var calibrationLastLoads = make([]float64, 0, controlCommandsPerSecond*10)
-	var calibrationTolerance = 10.0     // acceptable difference between percentiles to conclude
+	var calibrationTolerance = float64(config.CalibrationTolerance)
 	var calibrationResult uint16 = 1040 // a sensible default, in case calibration is disabled
 
 	lastResponse := controlResponse{}
