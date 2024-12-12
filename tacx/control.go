@@ -1,120 +1,140 @@
 package tacx
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type controlCommand struct {
-	targetLoad  float64 // newtons (for modeNormal)
-	targetSpeed float64 // km/h (for modeCalibrating)
-	keepalive   uint8   // value from the last response
-	mode        mode    // see const `mode`
-	weight      uint8   // kg
-	adjust      uint16  // adjustment resulting from calibration
+	mode        mode        // see const `mode`
+	behaviour   Behaviour   // see const `Behaviour`
+	targetSpeed int16       // modeCalibrating: raw speed
+	targetLoad  int16       // modeNormal + BehaviourERG: raw load
+	targetSlope targetSlope // modeNormal + BehaviourSlope: struct
+	keepalive   uint8       // value from the last response
+	weight      uint8       // kg
+	adjust      uint16      // adjustment resulting from calibration
+}
+
+type targetSlope struct {
+	degrees int8
+	wind    int8
 }
 
 type controlCommandRaw struct {
-	target    uint16
+	target    int16
 	keepalive uint8
-	mode      mode
+	mode      uint8
 	weight    uint8
 	adjust    uint16
 }
 
-func getControlCommandBytes(args controlCommandRaw) []byte {
-	return []byte{
-		0x01,
-		0x08,
-		0x01,
-		0x00,
-		uint8(args.target & 0xff),
-		uint8(args.target >> 8),
+func getControlCommandBytes(args controlCommandRaw) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	parts := []any{
+		uint8(0x01),
+		uint8(0x08),
+		uint8(0x01),
+		uint8(0x00),
+		args.target,
 		args.keepalive,
-		0x00,
-		uint8(args.mode),
+		uint8(0x00),
+		args.mode,
 		args.weight,
-		uint8(args.adjust & 0xff),
-		uint8(args.adjust >> 8),
+		args.adjust,
 	}
+	for i, v := range parts {
+		err := binary.Write(buf, binary.LittleEndian, v)
+		if err != nil {
+			return []byte{}, fmt.Errorf("unable to write part %v, %v: %w", i, v, err)
+		}
+	}
+	return buf.Bytes(), nil
 }
 
-func parseControlResponseBytes(response []byte) controlResponseRaw {
-	return controlResponseRaw{
-		distance:    uint32(response[4]) | uint32(response[5])<<8 | uint32(response[6])<<16 | uint32(response[7])<<24,
-		speed:       uint16(response[8]) | uint16(response[9])<<8,
-		averageLoad: uint16(response[12]) | uint16(response[13])<<8,
-		currentLoad: uint16(response[14]) | uint16(response[15])<<8,
-		targetLoad:  uint16(response[16]) | uint16(response[17])<<8,
-		keepalive:   response[18],
-		cadence:     response[20],
+func parseControlResponseBytes(response []byte) (controlResponseRaw, error) {
+	buf := bytes.NewReader(response)
+	out := controlResponseRaw{}
+	if err := binary.Read(buf, binary.LittleEndian, &out); err != nil {
+		return controlResponseRaw{}, err
 	}
+	return out, nil
 }
 
 type controlResponseRaw struct {
-	distance    uint32
-	speed       uint16
-	averageLoad uint16
-	currentLoad uint16
-	targetLoad  uint16
-	keepalive   uint8
-	cadence     uint8
+	_           uint32
+	Distance    uint32
+	Speed       uint16
+	_           uint16
+	AverageLoad int16
+	CurrentLoad int16
+	TargetLoad  int16
+	KeepAlive   uint8
+	_           uint8
+	Cadence     uint8
 }
 
 type controlResponse struct {
-	distance    float64            // km?
-	speed       float64            // km/h
-	averageLoad float64            // newtons
-	currentLoad float64            // newtons
-	targetLoad  float64            // newtons
-	keepalive   uint8              // value to send in the next control
-	cadence     uint8              // rpm
-	raw         controlResponseRaw // needed for some things like calibration
+	speed       uint16 // tacx speed units
+	currentLoad int16  // tacx load units
+	targetLoad  int16  // tacx load units
+	keepalive   uint8  // value to send in the next control
+	cadence     uint8  // rpm
 }
 
 // this is the main function to send and receive data from tacx
 // it both sends the target status and receives the reported status
 func sendControl(t Commander, command controlCommand) (controlResponse, error) {
-	log.Infof("sending tacx status: %+v", command)
+	log.Debugf("sending tacx status: %+v", command)
 
-	var target uint16
-	if command.mode == modeNormal {
-		target = getRawLoad(command.targetLoad)
-	}
-	if command.mode == modeCalibrating {
-		target = getRawSpeed(command.targetSpeed)
+	var target int16
+	switch command.mode {
+	case modeCalibrating:
+		target = command.targetSpeed
+	case modeNormal:
+		switch command.behaviour {
+		case BehaviourERG:
+			target = command.targetLoad
+		case BehaviourSlope:
+			// TODO
+		}
 	}
 
 	commandRaw := controlCommandRaw{
 		target:    target,
 		keepalive: command.keepalive,
-		mode:      command.mode,
+		mode:      uint8(command.mode),
 		weight:    command.weight,
 		adjust:    command.adjust,
 	}
-	log.Debugf("sending tacx status raw: %+v", commandRaw)
+	log.Tracef("sending tacx status raw: %+v", commandRaw)
 
-	commandBytes := getControlCommandBytes(commandRaw)
+	commandBytes, err := getControlCommandBytes(commandRaw)
+	if err != nil {
+		return controlResponse{}, fmt.Errorf("unable to process tacx control command: %w", err)
+	}
 
 	responseBytes, err := t.sendCommand(commandBytes)
 	if err != nil {
-		return controlResponse{}, fmt.Errorf("unable to set status: %w", err)
+		return controlResponse{}, fmt.Errorf("unable to send tacx control command: %w", err)
 	}
 
-	responseRaw := parseControlResponseBytes(responseBytes)
-	log.Debugf("received tacx status raw: %+v", responseRaw)
+	responseRaw, err := parseControlResponseBytes(responseBytes)
+	if err != nil {
+		return controlResponse{}, fmt.Errorf("unable to process tacx control response: %w", err)
+	}
+	log.Tracef("received tacx status raw: %+v", responseRaw)
 
 	response := controlResponse{
-		distance:    getKilometers(responseRaw.distance),
-		speed:       getKilometers(uint32(responseRaw.speed)),
-		averageLoad: getNewtons(responseRaw.averageLoad),
-		currentLoad: getNewtons(responseRaw.currentLoad),
-		targetLoad:  getNewtons(responseRaw.targetLoad),
-		keepalive:   responseRaw.keepalive,
-		cadence:     responseRaw.cadence,
-		raw:         responseRaw,
+		speed:       responseRaw.Speed,
+		currentLoad: responseRaw.CurrentLoad,
+		targetLoad:  responseRaw.TargetLoad,
+		keepalive:   responseRaw.KeepAlive,
+		cadence:     responseRaw.Cadence,
 	}
-	log.Infof("received tacx status: %+v", response)
+	log.Debugf("received tacx status: %+v", response)
 	return response, nil
 }

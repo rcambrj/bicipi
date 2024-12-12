@@ -16,6 +16,9 @@ func main() {
 	logLevel := flag.String("loglevel", "info", fmt.Sprintf("The log level. May be one of %v.", logLevels))
 	calibrate := flag.Bool("calibrate", true, "Whether to enable initial calibration. Defaults to true.") // --calibrate=false
 	slow := flag.Bool("slow", false, "Whether to poll slowly so that logs are easier to follow.")
+	calibrationSpeed := flag.Int("calibration-speed", 20, "How fast in km/h to spin the tyre during calibration.")
+	calibrationMin := flag.Int("calibration-min", 300, "How long in seconds to warm up the motor and tyre during calibration.")
+	calibrationMax := flag.Int("calibration-max", 480, "How long in seconds before calibration is abandoned.")
 	flag.Parse()
 
 	validLogLevel, err := log.ParseLevel(*logLevel)
@@ -25,10 +28,13 @@ func main() {
 	log.SetLevel(validLogLevel)
 
 	config := bicipi.Config{
-		SerialDevice:    *serialDevice,
-		BluetoothDevice: *bluetoothDevice,
-		Calibrate:       *calibrate,
-		Slow:            *slow,
+		SerialDevice:     *serialDevice,
+		BluetoothDevice:  *bluetoothDevice,
+		Calibrate:        *calibrate,
+		Slow:             *slow,
+		CalibrationSpeed: *calibrationSpeed,
+		CalibrationMin:   *calibrationMin,
+		CalibrationMax:   *calibrationMax,
 	}
 
 	bicipi.Start(config)
