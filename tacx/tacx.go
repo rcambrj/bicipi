@@ -34,10 +34,21 @@ func Start(config Config) {
 	var calibrationDurationMin = time.Duration(config.CalibrationMin) * time.Second
 	var calibrationDurationMax = time.Duration(config.CalibrationMax) * time.Second
 
-	var enabled = true           // TODO: get this from BLE
-	var behaviour = BehaviourERG // TODO: get this from BLE
-	var weight = 80              // TODO: get this from BLE
-	var targetWatts = 100.0      // TODO: get this from BLE
+	// var enabled = true           // TODO: get this from BLE
+	// var behaviour = BehaviourERG // TODO: get this from BLE
+	// var targetWatts = 100.0      // TODO: get this from BLE
+	// var weight = 80              // TODO: get this from BLE
+	// var windSpeed = 0            // TODO: get this from BLE
+	// var draftingFactor = 1       // TODO: get this from BLE
+	// var gradient = 3             // TODO: get this from BLE
+
+	var enabled = true             // TODO: get this from BLE
+	var behaviour = BehaviourSlope // TODO: get this from BLE
+	var targetWatts = 0.0          // TODO: get this from BLE
+	var weight = 80                // TODO: get this from BLE
+	var windSpeed = 0              // TODO: get this from BLE
+	var draftingFactor = 1         // TODO: get this from BLE
+	var gradient = 3               // TODO: get this from BLE
 
 	var controlCommandsPerSecond = 5
 	if config.Slow {
@@ -79,6 +90,18 @@ func Start(config Config) {
 				log.Warnf("mode: normal; behaviour: erg; watts: %v; speed: %v; target %v", targetWatts, lastResponse.speed, command.targetLoad)
 			case BehaviourSlope:
 				command.weight = uint8(weight)
+				targetWatts := getWattsForSlope(targetLoadForSlopeArgs{
+					currentSpeed:   lastResponse.speed,
+					weight:         weight,
+					windSpeed:      windSpeed,
+					draftingFactor: draftingFactor,
+					gradient:       gradient,
+				})
+				command.targetLoad = getTargetLoad(targetLoadArgs{
+					targetWatts:  targetWatts,
+					currentSpeed: lastResponse.speed,
+				})
+				log.Warnf("mode: normal; behaviour: slope; gradient: %v; speed: %v; target %v", gradient, lastResponse.speed, command.targetLoad)
 			}
 		}
 

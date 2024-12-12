@@ -9,19 +9,12 @@ import (
 )
 
 type controlCommand struct {
-	mode        mode        // see const `mode`
-	behaviour   Behaviour   // see const `Behaviour`
-	targetSpeed int16       // modeCalibrating: raw speed
-	targetLoad  int16       // modeNormal + BehaviourERG: raw load
-	targetSlope targetSlope // modeNormal + BehaviourSlope: struct
-	keepalive   uint8       // value from the last response
-	weight      uint8       // kg
-	adjust      uint16      // adjustment resulting from calibration
-}
-
-type targetSlope struct {
-	degrees int8
-	wind    int8
+	mode        mode   // see const `mode`
+	targetSpeed int16  // modeCalibrating: raw speed
+	targetLoad  int16  // modeNormal: raw load
+	keepalive   uint8  // value from the last response
+	weight      uint8  // kg
+	adjust      uint16 // adjustment resulting from calibration
 }
 
 type controlCommandRaw struct {
@@ -95,12 +88,7 @@ func sendControl(t Commander, command controlCommand) (controlResponse, error) {
 	case modeCalibrating:
 		target = command.targetSpeed
 	case modeNormal:
-		switch command.behaviour {
-		case BehaviourERG:
-			target = command.targetLoad
-		case BehaviourSlope:
-			// TODO
-		}
+		target = command.targetLoad
 	}
 
 	commandRaw := controlCommandRaw{
