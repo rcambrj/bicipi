@@ -25,11 +25,12 @@ func getKilometers(rawSpeed uint16) float64 {
 	return float64(rawSpeed) / rawSpeedFactor
 }
 
-// var rawLoadFactor = 137.0
+// TODO: check whether this number is correct
+var rawLoadFactor = 128866.0
 
-// func getRawLoad(newtons float64) int16 {
-// 	return int16(newtons * rawLoadFactor)
-// }
-// func getNewtons(rawLoad int16) float64 {
-// 	return float64(rawLoad) / rawLoadFactor
-// }
+func getRawLoad(watts float64) int16 {
+	return int16(watts * rawLoadFactor)
+}
+func getWatts(rawLoad int16) float64 {
+	return float64(rawLoad) / rawLoadFactor
+}

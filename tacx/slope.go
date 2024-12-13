@@ -30,7 +30,7 @@ func getWattsForSlope(args targetLoadForSlopeArgs) float64 {
 	gradient := float64(args.gradient)
 	gravityWatts := gradient / 100 * float64(weight) * gravity * speed
 
-	log.Warnf("rollingWatts: %v; airWatts: %v; gravityWatts: %v", rollingWatts, airWatts, gravityWatts)
+	log.Debugf("rollingWatts: %v; airWatts: %v; gravityWatts: %v", rollingWatts, airWatts, gravityWatts)
 
 	return rollingWatts + airWatts + gravityWatts
 }

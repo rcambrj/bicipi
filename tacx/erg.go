@@ -5,9 +5,6 @@ type targetLoadArgs struct {
 	currentSpeed uint16
 }
 
-// TODO: confirm that this number is reliable
-var rawLoadFactor = 128866.0
-
 // the speed above which watts are applied correctly
 // below this speed, the T1941 doesn't behave very well
 var transitionSpeed uint16 = 4636
@@ -22,9 +19,9 @@ func getTargetLoad(args targetLoadArgs) int16 {
 	}
 
 	if args.currentSpeed <= transitionSpeed {
-		transitionLoadValue := args.targetWatts * rawLoadFactor / float64(transitionSpeed)
+		transitionLoadValue := float64(getRawLoad(args.targetWatts)) / float64(transitionSpeed)
 		return int16(float64(args.currentSpeed) / float64(transitionSpeed) * float64(transitionLoadValue))
 	}
 
-	return int16(args.targetWatts * rawLoadFactor / float64(args.currentSpeed))
+	return int16(float64(getRawLoad(args.targetWatts)) / float64(args.currentSpeed))
 }

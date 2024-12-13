@@ -13,6 +13,7 @@ func main() {
 
 	serialDevice := flag.String("serial", "", "The serial device to which Tacx motorbrake is connected. (default is first one found)")
 	bluetoothDevice := flag.String("bluetooth", "", "The bluetooth device on which the FTMS will be advertised. (default is first one found)")
+	bluetoothName := flag.String("bluetooth-name", "bicipi", "The bluetooth device name to advertise")
 	logLevel := flag.String("loglevel", "info", fmt.Sprintf("The log level. May be one of %v.", logLevels))
 	calibrate := flag.Bool("calibrate", true, "Whether to enable initial calibration. Defaults to true.") // --calibrate=false
 	slow := flag.Bool("slow", false, "Whether to poll slowly so that logs are easier to follow.")
@@ -31,6 +32,7 @@ func main() {
 	config := bicipi.Config{
 		SerialDevice:         *serialDevice,
 		BluetoothDevice:      *bluetoothDevice,
+		BluetoothName:        *bluetoothName,
 		Calibrate:            *calibrate,
 		Slow:                 *slow,
 		CalibrationSpeed:     *calibrationSpeed,

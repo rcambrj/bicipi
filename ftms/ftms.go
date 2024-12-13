@@ -2,11 +2,80 @@ package ftms
 
 import (
 	"fmt"
+	"sync"
 
 	"tinygo.org/x/bluetooth"
 )
 
-func Start() {
+type Config struct {
+	BluetoothName string
+}
+
+type State struct {
+}
+
+type FTMSEvent struct {
+}
+
+type Listener = func(event FTMSEvent)
+
+func MakeService(config Config) FTMS {
+	return FTMS{
+		config:  config,
+		channel: make(chan FTMSEvent),
+	}
+}
+
+type FTMS struct {
+	config    Config
+	stateLock sync.Mutex
+	state     State
+	channel   chan FTMSEvent
+	listeners []Listener
+
+	connected      bool
+	serviceManager ServiceManager
+}
+
+func (f *FTMS) SetState(state State) {
+	f.stateLock.Lock()
+	defer f.stateLock.Unlock()
+
+	// t.state.foo = state.foo
+}
+
+func (f *FTMS) getState() State {
+	f.stateLock.Lock()
+	defer f.stateLock.Unlock()
+
+	return f.state
+}
+
+func (f *FTMS) On(listener Listener) {
+	f.listeners = append(f.listeners, listener)
+}
+
+func (f *FTMS) requestControl() error {
+	// Do we even need this?
+	if !f.connected {
+		return fmt.Errorf("not connected")
+	}
+
+	char, err := f.serviceManager.GetCharacteristic(bluetooth.ServiceUUIDFitnessMachine, bluetooth.CharacteristicUUIDFitnessMachineControlPoint)
+	if err != nil {
+		return fmt.Errorf("unable to get characteristic: %w", err)
+	}
+
+	fmt.Printf("%v", char)
+	// isLegit := char.Write(getFTMSMode(mode))
+	return nil
+}
+
+func (f *FTMS) Start() {
+	go f.startBLELoop()
+}
+
+func (f *FTMS) startBLELoop() {
 	adapter := bluetooth.DefaultAdapter
 
 	must("enable BLE stack", adapter.Enable())
@@ -20,7 +89,7 @@ func Start() {
 
 	adv := adapter.DefaultAdvertisement()
 	must("configure advertisement", adv.Configure(bluetooth.AdvertisementOptions{
-		LocalName:    "Tacx BLE Trainer",
+		LocalName:    f.config.BluetoothName,
 		ServiceUUIDs: serviceUUIDs,
 	}))
 
