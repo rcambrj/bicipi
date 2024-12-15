@@ -13,7 +13,6 @@ type version struct {
 	firmwareVersion   string
 	serial            int32
 	date              string
-	other             string
 }
 
 func getVersion(t Commander) (version, error) {
@@ -26,7 +25,6 @@ func getVersion(t Commander) (version, error) {
 	firmwareVersion := fmt.Sprintf("%02X.%02X.%02X.%02X", response[7], response[6], response[5], response[4])
 	serial := int32(response[8]) | int32(response[9])<<8 | int32(response[10])<<16 | int32(response[11])<<24
 	date := fmt.Sprintf("%02X-%02X", response[13], response[12])
-	other := fmt.Sprintf("%02X.%02X", response[15], response[14])
 	// serial-based properties
 	manufactureYear := 2000 + int(serial/100000%100)
 	manufactureNumber := int(serial % 100000)
@@ -39,7 +37,6 @@ func getVersion(t Commander) (version, error) {
 		firmwareVersion:   firmwareVersion,
 		serial:            serial,
 		date:              date,
-		other:             other,
 	}
 	log.Infof("received tacx version: %+v", version)
 	return version, nil

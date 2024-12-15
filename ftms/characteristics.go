@@ -52,7 +52,7 @@ const (
 	// 17-31 Reserved for Future Use
 )
 
-// bitmask
+// 16-bit bitmask
 //
 // 4.9 Indoor Bike Data
 //
@@ -73,12 +73,3 @@ const (
 	IBDRemainingTimePresent
 	// No bits reserved for future use
 )
-
-//
-//
-// 4.14 Supported Power Range
-//
-// Minimum Power field
-// Maximum Power field
-// Minimum Increment field
-// as defined on the Bluetooth SIG Assigned Numbers webpage [2].

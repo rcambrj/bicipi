@@ -34,7 +34,6 @@ func TestGetVersion(t *testing.T) {
 				firmwareVersion:   "00.00.10.07",
 				serial:            410920366,
 				date:              "08-15",
-				other:             "00.00",
 			},
 		},
 	}

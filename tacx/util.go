@@ -13,7 +13,7 @@ type Behaviour uint8
 
 const (
 	BehaviourERG Behaviour = iota
-	BehaviourSlope
+	BehaviourSimulator
 )
 
 var rawSpeedFactor = 289.75
@@ -28,8 +28,8 @@ func getKilometers(rawSpeed uint16) float64 {
 // TODO: check whether this number is correct
 var rawLoadFactor = 128866.0
 
-func getRawLoad(watts float64) int16 {
-	return int16(watts * rawLoadFactor)
+func getRawLoad(watts float64) float64 {
+	return watts * rawLoadFactor
 }
 func getWatts(rawLoad int16) float64 {
 	return float64(rawLoad) / rawLoadFactor

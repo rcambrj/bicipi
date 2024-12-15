@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type targetLoadForSlopeArgs struct {
+type targetLoadForSimulatorArgs struct {
 	currentSpeed   uint16
 	weight         int // kg
 	windSpeed      int // m/s
@@ -14,7 +14,7 @@ type targetLoadForSlopeArgs struct {
 	gradient       int // Percentage 0...100
 }
 
-func getWattsForSlope(args targetLoadForSlopeArgs) float64 {
+func getWattsForSimulator(args targetLoadForSimulatorArgs) float64 {
 	rollingResistance := 0.004
 	weight := args.weight                           // kg
 	gravity := 9.81                                 // m/s2

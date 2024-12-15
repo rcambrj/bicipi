@@ -19,19 +19,20 @@ type Config struct {
 }
 
 type State struct {
-	enabled        bool
-	behaviour      Behaviour
-	targetWatts    float64
-	weight         int
-	windSpeed      int
-	draftingFactor int
-	gradient       int
+	Enabled        bool
+	Behaviour      Behaviour
+	TargetWatts    float64
+	Weight         int
+	WindSpeed      int
+	DraftingFactor int
+	Gradient       int
 }
 
 type TacxEvent struct {
-	ready       bool
-	currentLoad float64
-	cadence     uint8
+	Ready   bool
+	Speed   float64 // km/h
+	Load    float64 // watts
+	Cadence uint8   // rpm
 }
 
 type Listener = func(event TacxEvent)
@@ -55,13 +56,13 @@ func (t *Tacx) SetState(state State) {
 	t.stateLock.Lock()
 	defer t.stateLock.Unlock()
 
-	t.state.enabled = state.enabled
-	t.state.behaviour = state.behaviour
-	t.state.targetWatts = state.targetWatts
-	t.state.weight = state.weight
-	t.state.windSpeed = state.windSpeed
-	t.state.draftingFactor = state.draftingFactor
-	t.state.gradient = state.gradient
+	t.state.Enabled = state.Enabled
+	t.state.Behaviour = state.Behaviour
+	t.state.TargetWatts = state.TargetWatts
+	t.state.Weight = state.Weight
+	t.state.WindSpeed = state.WindSpeed
+	t.state.DraftingFactor = state.DraftingFactor
+	t.state.Gradient = state.Gradient
 }
 
 func (t *Tacx) getState() State {
@@ -139,33 +140,33 @@ func (t *Tacx) startSerialLoop() {
 			command.targetSpeed = calibrationSpeed
 			command.weight = lowestWeight
 			log.Infof("mode: calibrating")
-		} else if !state.enabled {
+		} else if !state.Enabled {
 			command.mode = modeOff
 			log.Infof("mode: off")
 		} else {
 			command.mode = modeNormal
-			switch state.behaviour {
+			switch state.Behaviour {
 			case BehaviourERG:
 				command.weight = lowestWeight
 				command.targetLoad = getTargetLoad(targetLoadArgs{
-					targetWatts:  state.targetWatts,
+					targetWatts:  state.TargetWatts,
 					currentSpeed: lastResponse.speed,
 				})
-				log.Infof("mode: normal; behaviour: erg; watts: %v; speed: %v; target %v", state.targetWatts, lastResponse.speed, command.targetLoad)
-			case BehaviourSlope:
-				command.weight = uint8(state.weight)
-				targetWattsForSlope := getWattsForSlope(targetLoadForSlopeArgs{
+				log.Infof("mode: normal; behaviour: erg; watts: %v; speed: %v; target %v", state.TargetWatts, lastResponse.speed, command.targetLoad)
+			case BehaviourSimulator:
+				command.weight = uint8(state.Weight)
+				targetWattsForSimulator := getWattsForSimulator(targetLoadForSimulatorArgs{
 					currentSpeed:   lastResponse.speed,
-					weight:         state.weight,
-					windSpeed:      state.windSpeed,
-					draftingFactor: state.draftingFactor,
-					gradient:       state.gradient,
+					weight:         state.Weight,
+					windSpeed:      state.WindSpeed,
+					draftingFactor: state.DraftingFactor,
+					gradient:       state.Gradient,
 				})
 				command.targetLoad = getTargetLoad(targetLoadArgs{
-					targetWatts:  targetWattsForSlope,
+					targetWatts:  targetWattsForSimulator,
 					currentSpeed: lastResponse.speed,
 				})
-				log.Infof("mode: normal; behaviour: slope; gradient: %v; speed: %v; target %v", state.gradient, lastResponse.speed, command.targetLoad)
+				log.Infof("mode: normal; behaviour: simulator; gradient: %v; speed: %v; target %v", state.Gradient, lastResponse.speed, command.targetLoad)
 			}
 		}
 
@@ -218,9 +219,10 @@ func (t *Tacx) startSerialLoop() {
 		}
 
 		t.channel <- TacxEvent{
-			ready:       !calibrating,
-			currentLoad: getWatts(controlResponse.currentLoad),
-			cadence:     controlResponse.cadence,
+			Ready:   !calibrating,
+			Speed:   getKilometers(controlResponse.speed),
+			Load:    getWatts(controlResponse.currentLoad) * float64(controlResponse.speed),
+			Cadence: controlResponse.cadence,
 		}
 
 		lastResponse = controlResponse

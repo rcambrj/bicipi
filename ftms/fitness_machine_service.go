@@ -2,12 +2,12 @@ package ftms
 
 import (
 	"encoding/binary"
-	"fmt"
 
+	log "github.com/sirupsen/logrus"
 	"tinygo.org/x/bluetooth"
 )
 
-func CreateFitnessMachineCharacteristics() []bluetooth.CharacteristicConfig {
+func CreateFitnessMachineCharacteristics(controlPointDataHandler bluetooth.WriteEvent) []bluetooth.CharacteristicConfig {
 	return []bluetooth.CharacteristicConfig{
 		{
 			UUID:  bluetooth.CharacteristicUUIDFitnessMachineFeature,
@@ -25,12 +25,10 @@ func CreateFitnessMachineCharacteristics() []bluetooth.CharacteristicConfig {
 			Flags: bluetooth.CharacteristicNotifyPermission,
 		},
 		{
-			UUID:  bluetooth.CharacteristicUUIDFitnessMachineControlPoint,
-			Value: getFitnessMachineControlPoint(),
-			Flags: bluetooth.CharacteristicIndicatePermission | bluetooth.CharacteristicWritePermission,
-			WriteEvent: func(client bluetooth.Connection, offset int, value []byte) {
-				unhandledWriteEvent("CharacteristicUUIDFitnessMachineControlPoint", offset, value)
-			},
+			UUID:       bluetooth.CharacteristicUUIDFitnessMachineControlPoint,
+			Value:      getFitnessMachineControlPoint(),
+			Flags:      bluetooth.CharacteristicIndicatePermission | bluetooth.CharacteristicWritePermission,
+			WriteEvent: controlPointDataHandler,
 		},
 		{
 			UUID:  bluetooth.CharacteristicUUIDSupportedPowerRange,
@@ -60,16 +58,16 @@ func getFitnessMachineFeatures() []byte {
 	bytes = binary.LittleEndian.AppendUint32(bytes, featuresBitmask)
 	bytes = binary.LittleEndian.AppendUint32(bytes, targetSettingsBitmask)
 	// FortiusAnt: 00000010 01000000 00000000 00000000 00001000 00100000 00000000 00000000
-	fmt.Println("getFitnessMachineFeatures", formatBinary(bytes))
+	log.Tracef("defining ble characteristic FitnessMachineFeatures: %v", formatBinary(bytes))
 	return bytes
 }
 
 func getIndoorBikeData() []byte {
-	var bitmask uint16 = IBDInstantaneousPowerPresent | IBDHeartRatePresent
+	var bitmask uint16 = IBDInstantaneousCadence | IBDInstantaneousPowerPresent
 	bytes := make([]byte, 4*16/8)
 	binary.LittleEndian.PutUint16(bytes, bitmask)
 	// FortiusAnt: 01000000 00000010 01111011 00000000 11001000 00000001 01011001 00000000
-	fmt.Println("getIndoorBikeData", formatBinary(bytes))
+	log.Tracef("defining ble characteristic IndoorBikeData: %v", formatBinary(bytes))
 	return bytes
 }
 
@@ -77,7 +75,7 @@ func getFitnessMachineStatus() []byte {
 	// Server status sent to Collector
 	bytes := []byte{0x00, 0x00}
 	// FortiusAnt: 00000000 00000000
-	fmt.Println("getFitnessMachineStatus", formatBinary(bytes))
+	log.Tracef("defining ble characteristic FitnessMachineStatus: %v", formatBinary(bytes))
 	return bytes
 }
 
@@ -85,7 +83,7 @@ func getFitnessMachineControlPoint() []byte {
 	// Collector commands sent to Server
 	bytes := []byte{0x00, 0x00}
 	// FortiusAnt: 00000000 00000000
-	fmt.Println("getFitnessMachineControlPoint", formatBinary(bytes))
+	log.Tracef("defining ble characteristic FitnessMachineControlPoint: %v", formatBinary(bytes))
 	return bytes
 }
 
@@ -95,6 +93,6 @@ func getSupportedPowerRange() []byte {
 	bytes = binary.LittleEndian.AppendUint16(bytes, 1000) // max
 	bytes = binary.LittleEndian.AppendUint16(bytes, 1)    // step
 	// FortiusAnt: 00000000 00000000 11101000 00000011 00000001 00000000
-	fmt.Println("getSupportedPowerRange", formatBinary(bytes))
+	log.Tracef("defining ble characteristic SupportedPowerRange: %v", formatBinary(bytes))
 	return bytes
 }

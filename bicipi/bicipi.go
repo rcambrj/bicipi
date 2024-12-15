@@ -10,7 +10,6 @@ import (
 
 type Config struct {
 	SerialDevice         string
-	BluetoothDevice      string
 	BluetoothName        string
 	Calibrate            bool
 	Slow                 bool
@@ -37,34 +36,60 @@ func Start(config Config) {
 	ftmsService := ftms.MakeService(ftms.Config{
 		BluetoothName: config.BluetoothName,
 	})
-	ftmsService.Start()
 
 	// TODO: wait for tacx to be ready then advertise FTMS
 
+	tacxReady := false
+	ftmsStarted := false
+
 	tacxService.On(func(event tacx.TacxEvent) {
-		// TODO
+		log.WithFields(log.Fields{"event": event}).Debugf("Tacx event")
+		tacxReady = event.Ready
+
+		if tacxReady {
+			if !ftmsStarted {
+				ftmsStarted = true
+				ftmsService.Start()
+			}
+			ftmsService.SetState(ftms.State{
+				Speed:   uint16(event.Speed * 100), // TODO what is this unit?
+				Load:    int16(event.Load),
+				Cadence: uint16(event.Cadence * 2), // TODO what is this unit?
+			})
+		}
 	})
 	ftmsService.On(func(event ftms.FTMSEvent) {
-		// TODO
+		log.WithFields(log.Fields{"event": event}).Debugf("BLE event")
 
-		// var enabled = true           // TODO: get this from BLE
-		// var behaviour = BehaviourERG // TODO: get this from BLE
-		// var targetWatts = 100.0      // TODO: get this from BLE
-		// var weight = 80              // TODO: get this from BLE
-		// var windSpeed = 0            // TODO: get this from BLE
-		// var draftingFactor = 1       // TODO: get this from BLE
-		// var gradient = 3             // TODO: get this from BLE
+		if !tacxReady {
+			// this shouldn't happen as FTMS starts after ready
+			log.Fatalf("unable to set tacx state: tacx not ready")
+		}
 
-		// var enabled = true             // TODO: get this from BLE
-		// var behaviour = BehaviourSlope // TODO: get this from BLE
-		// var targetWatts = 0.0          // TODO: get this from BLE
-		// var weight = 80                // TODO: get this from BLE
-		// var windSpeed = 0              // TODO: get this from BLE
-		// var draftingFactor = 1         // TODO: get this from BLE
-		// var gradient = 3               // TODO: get this from BLE
+		if event.Mode == ftms.ModeTargetPower {
+			tacxService.SetState(tacx.State{
+				Enabled:     true,
+				Behaviour:   tacx.BehaviourERG,
+				TargetWatts: float64(event.TargetPower),
+			})
+		}
+
+		if event.Mode == ftms.ModeIndoorBikeSimulation {
+			tacxService.SetState(tacx.State{
+				Enabled:   true,
+				Behaviour: tacx.BehaviourSimulator,
+				// Weight: ??
+				WindSpeed: 0,
+				Gradient:  0,
+				// RollingResistance: 0,
+				// WindResistance:    0,
+
+				// draftingFactor
+			})
+		}
 	})
 
 	for {
-		time.Sleep(10 * time.Hour)
+		time.Sleep(time.Hour)
 	}
 }
