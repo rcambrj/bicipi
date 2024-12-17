@@ -122,7 +122,11 @@ func deserializeResponse(response []byte) ([]byte, error) {
 	checksumReceived := getChecksum(response[1 : l-5])
 	checksumMatches := checksumReceived == checksumCalculated
 
-	log.Tracef("checksum: matches %v received %#v calculated %#v", checksumMatches, checksumReceived, checksumCalculated)
+	log.WithFields(log.Fields{
+		"match":      checksumMatches,
+		"received":   checksumReceived,
+		"calculated": checksumCalculated,
+	}).Tracef("checksum")
 	if !checksumMatches {
 		return []byte{}, fmt.Errorf("checksum does not match")
 	}
@@ -180,12 +184,12 @@ func getResponse(port SerialPort) ([]byte, error) {
 			if tries == 0 {
 				return []byte{}, fmt.Errorf("no serial response received")
 			}
-			log.Tracef("received partial frame: %v", frame)
+			log.WithFields(log.Fields{"frame": frame}).Tracef("received partial frame")
 			tries--
 			continue
 		}
 
-		log.Tracef("received whole frame: %v", frame)
+		log.WithFields(log.Fields{"frame": frame}).Tracef("received whole frame")
 		return frame, nil
 	}
 }
@@ -203,7 +207,7 @@ type C struct {
 }
 
 func (c *C) sendCommand(command []byte) ([]byte, error) {
-	log.Tracef("sending serial command: %v", command)
+	log.WithFields(log.Fields{"command": command}).Tracef("sending serial command")
 	outFrame, err := serializeCommand(command)
 	if err != nil {
 		return []byte{}, fmt.Errorf("unable to serialize command: %w", err)
@@ -215,7 +219,7 @@ func (c *C) sendCommand(command []byte) ([]byte, error) {
 	if err != nil {
 		return []byte{}, fmt.Errorf("unable to write to serial port: %w", err)
 	}
-	log.Tracef("sent serial frame: %v", outFrame)
+	log.WithFields(log.Fields{"outFrame": outFrame}).Tracef("sent serial frame")
 
 	inFrame, err := getResponse(c.port)
 	if err != nil {
@@ -226,6 +230,6 @@ func (c *C) sendCommand(command []byte) ([]byte, error) {
 		return []byte{}, fmt.Errorf("unable to deserialize response: %w", err)
 	}
 
-	log.Tracef("received serial response: %v", response)
+	log.WithFields(log.Fields{"response": response}).Tracef("received serial response")
 	return response, nil
 }

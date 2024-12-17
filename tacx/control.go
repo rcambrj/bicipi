@@ -81,7 +81,7 @@ type controlResponse struct {
 // this is the main function to send and receive data from tacx
 // it both sends the target status and receives the reported status
 func sendControl(t Commander, command controlCommand) (controlResponse, error) {
-	log.Debugf("sending tacx status: %+v", command)
+	log.WithFields(log.Fields{"command": fmt.Sprintf("%+v", command)}).Debugf("sending tacx status")
 
 	var target int16
 	switch command.mode {
@@ -98,7 +98,7 @@ func sendControl(t Commander, command controlCommand) (controlResponse, error) {
 		weight:    command.weight,
 		adjust:    command.adjust,
 	}
-	log.Tracef("sending tacx status raw: %+v", commandRaw)
+	log.WithFields(log.Fields{"commandRaw": fmt.Sprintf("%+v", commandRaw)}).Tracef("sending tacx status raw")
 
 	commandBytes, err := getControlCommandBytes(commandRaw)
 	if err != nil {
@@ -114,7 +114,7 @@ func sendControl(t Commander, command controlCommand) (controlResponse, error) {
 	if err != nil {
 		return controlResponse{}, fmt.Errorf("unable to process tacx control response: %w", err)
 	}
-	log.Tracef("received tacx status raw: %+v", responseRaw)
+	log.WithFields(log.Fields{"responseRaw": fmt.Sprintf("%+v", responseRaw)}).Tracef("received tacx status raw")
 
 	response := controlResponse{
 		speed:       responseRaw.Speed,
@@ -123,6 +123,6 @@ func sendControl(t Commander, command controlCommand) (controlResponse, error) {
 		keepalive:   responseRaw.KeepAlive,
 		cadence:     responseRaw.Cadence,
 	}
-	log.Debugf("received tacx status: %+v", response)
+	log.WithFields(log.Fields{"response": fmt.Sprintf("%+v", response)}).Debugf("received tacx status")
 	return response, nil
 }

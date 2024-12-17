@@ -146,29 +146,31 @@ func (f *FTMS) registerServices(serviceManager *ServiceManager) error {
 func (f *FTMS) receiveFTMSOperation(client bluetooth.Connection, offset int, value []byte) {
 	log.WithFields(log.Fields{
 		"operation": value,
-	}).Trace("received FTMS operation")
+	}).Trace("ble received FTMS Control Point operation")
 
 	switch value[0] {
 	case FMCPOpCodeResponseCode:
+		log.Trace("ignoring ble command echo")
 		return
 	case FMCPOpCodeRequestControl:
+		log.Debugf("ble received FTMS control request")
 		err := writeFMCPResultCode(&f.serviceManager, FMCPOpCodeRequestControl, FMCPResultCodeSuccess)
 		if err != nil {
 			log.Fatalf("unable to accept control: %v", err)
 		}
 	case FMCPOpCodeSetTargetPower:
-		targetPowerCommand, err := readFMCPTargetPower(value)
+		command, err := readFMCPTargetPower(value)
 		if err != nil {
 			log.Fatalf("unable to read ble SetTargetPower command: %v", err)
 		}
-		log.Infof("ble command SetTargetPower to %v", targetPowerCommand.TargetPower)
+		log.WithFields(log.Fields{"command": fmt.Sprintf("%+v", command)}).Debugf("ble command SetTargetPower")
 
 		f.channel <- FTMSEvent{
 			Mode:        ModeTargetPower,
-			TargetPower: getWatts(targetPowerCommand.TargetPower),
+			TargetPower: getWatts(command.TargetPower),
 		}
 
-		err = writeFMSTargetPower(&f.serviceManager, targetPowerCommand.TargetPower)
+		err = writeFMSTargetPower(&f.serviceManager, command)
 		if err != nil {
 			log.Errorf("unable to SetTargetPower on FMS: %v", err)
 		}
@@ -177,18 +179,34 @@ func (f *FTMS) receiveFTMSOperation(client bluetooth.Connection, offset int, val
 			log.Errorf("unable to SetTargetPower on FMCP: %v", err)
 		}
 	case FMCPOpCodeSetIndoorBikeSimulation:
+		log.Debugf("ble received FTMS set indoor bike simulation request")
+		command, err := readFMCPIndoorBikeSimulation(value)
+		if err != nil {
+			log.Fatalf("unable to read ble SetIndoorBikeSimulation command: %v", err)
+		}
+		log.WithFields(log.Fields{"command": fmt.Sprintf("%+v", command)}).Debugf("ble command SetIndoorBikeSimulation")
+
 		f.channel <- FTMSEvent{
 			Mode:              ModeIndoorBikeSimulation,
-			WindSpeed:         float64(value[1]) * 0.001,
-			TargetGrade:       float64(value[2]) * 0.01,
-			RollingResistance: float64(value[3]) * 0.0001,
-			WindResistance:    float64(value[4]) * 0.01,
+			WindSpeed:         float64(command.WindSpeed) * 0.001,
+			TargetGrade:       float64(command.TargetGrade) * 0.01,
+			RollingResistance: float64(command.RollingResistance) * 0.001,
+			WindResistance:    float64(command.WindResistance) * 0.01,
+		}
+
+		err = writeFMSIndoorBikeSimulation(&f.serviceManager, command)
+		if err != nil {
+			log.Errorf("unable to SetIndoorBikeSimulation on FMS: %v", err)
+		}
+		err = writeFMCPResultCode(&f.serviceManager, FMCPOpCodeSetIndoorBikeSimulation, FMCPResultCodeSuccess)
+		if err != nil {
+			log.Errorf("unable to SetIndoorBikeSimulation on FMCP: %v", err)
 		}
 	default:
 		log.WithFields(log.Fields{
 			"offset": offset,
 			"value":  value,
-		}).Fatalf("FTMS operation opcode not implemented")
+		}).Errorf("FTMS operation opcode not implemented")
 	}
 }
 
@@ -196,5 +214,5 @@ func (f *FTMS) receiveCyclingPowerOperation(client bluetooth.Connection, offset 
 	log.WithFields(log.Fields{
 		"offset": offset,
 		"value":  value,
-	}).Fatalf("Cycling Power operation opcode not implemented")
+	}).Errorf("Cycling Power operation opcode not implemented")
 }

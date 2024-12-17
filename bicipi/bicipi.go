@@ -1,6 +1,7 @@
 package bicipi
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/rcambrj/tacxble/ftms"
@@ -9,6 +10,7 @@ import (
 )
 
 type Config struct {
+	Weight               uint8
 	SerialDevice         string
 	BluetoothName        string
 	Calibrate            bool
@@ -22,7 +24,11 @@ type Config struct {
 func Start(config Config) {
 	log.Info("starting...")
 
+	tacxReady := false
+	ftmsStarted := false
+
 	tacxService := tacx.MakeService(tacx.Config{
+		Weight:               config.Weight,
 		Device:               config.SerialDevice,
 		Calibrate:            config.Calibrate,
 		Slow:                 config.Slow,
@@ -31,19 +37,13 @@ func Start(config Config) {
 		CalibrationMax:       config.CalibrationMax,
 		CalibrationTolerance: config.CalibrationTolerance,
 	})
-	tacxService.Start()
 
 	ftmsService := ftms.MakeService(ftms.Config{
 		BluetoothName: config.BluetoothName,
 	})
 
-	// TODO: wait for tacx to be ready then advertise FTMS
-
-	tacxReady := false
-	ftmsStarted := false
-
 	tacxService.On(func(event tacx.TacxEvent) {
-		log.WithFields(log.Fields{"event": event}).Debugf("Tacx event")
+		log.WithFields(log.Fields{"event": fmt.Sprintf("%+v", event)}).Infof("tacx event")
 		tacxReady = event.Ready
 
 		if tacxReady {
@@ -59,7 +59,7 @@ func Start(config Config) {
 		}
 	})
 	ftmsService.On(func(event ftms.FTMSEvent) {
-		log.WithFields(log.Fields{"event": event}).Debugf("BLE event")
+		log.WithFields(log.Fields{"event": fmt.Sprintf("%+v", event)}).Infof("ble event")
 
 		if !tacxReady {
 			// this shouldn't happen as FTMS starts after ready
@@ -76,18 +76,17 @@ func Start(config Config) {
 
 		if event.Mode == ftms.ModeIndoorBikeSimulation {
 			tacxService.SetState(tacx.State{
-				Enabled:   true,
-				Behaviour: tacx.BehaviourSimulator,
-				// Weight: ??
-				WindSpeed: 0,
-				Gradient:  0,
-				// RollingResistance: 0,
-				// WindResistance:    0,
-
-				// draftingFactor
+				Enabled:           true,
+				Behaviour:         tacx.BehaviourSimulator,
+				WindSpeed:         event.WindSpeed,
+				Gradient:          event.TargetGrade,
+				RollingResistance: event.RollingResistance,
+				WindResistance:    event.WindResistance,
 			})
 		}
 	})
+
+	tacxService.Start()
 
 	for {
 		time.Sleep(time.Hour)

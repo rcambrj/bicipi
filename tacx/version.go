@@ -38,6 +38,6 @@ func getVersion(t Commander) (version, error) {
 		serial:            serial,
 		date:              date,
 	}
-	log.Infof("received tacx version: %+v", version)
+	log.WithFields(log.Fields{"version": fmt.Sprintf("%+v", version)}).Infof("received tacx version")
 	return version, nil
 }

@@ -1,6 +1,7 @@
 package tacx
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 )
 
 type Config struct {
+	Weight               uint8
 	Device               string
 	Calibrate            bool
 	Slow                 bool
@@ -19,13 +21,17 @@ type Config struct {
 }
 
 type State struct {
-	Enabled        bool
-	Behaviour      Behaviour
-	TargetWatts    float64
-	Weight         int
-	WindSpeed      int
-	DraftingFactor int
-	Gradient       int
+	Enabled   bool
+	Behaviour Behaviour
+
+	// BehaviourERG
+	TargetWatts float64
+
+	// BehaviourSimulator
+	WindSpeed         float64
+	Gradient          float64
+	RollingResistance float64
+	WindResistance    float64
 }
 
 type TacxEvent struct {
@@ -56,13 +62,7 @@ func (t *Tacx) SetState(state State) {
 	t.stateLock.Lock()
 	defer t.stateLock.Unlock()
 
-	t.state.Enabled = state.Enabled
-	t.state.Behaviour = state.Behaviour
-	t.state.TargetWatts = state.TargetWatts
-	t.state.Weight = state.Weight
-	t.state.WindSpeed = state.WindSpeed
-	t.state.DraftingFactor = state.DraftingFactor
-	t.state.Gradient = state.Gradient
+	t.state = state
 }
 
 func (t *Tacx) getState() State {
@@ -106,7 +106,7 @@ func (t *Tacx) startSerialLoop() {
 
 	_, err = getVersion(commander)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("unable to retrieve tacx version: %v", err)
 	}
 
 	var lowestWeight = uint8(0x0a)
@@ -135,14 +135,19 @@ func (t *Tacx) startSerialLoop() {
 			adjust:    calibrationResult,
 		}
 
+		logLine := "mode"
 		if calibrating {
 			command.mode = modeCalibrating
 			command.targetSpeed = calibrationSpeed
 			command.weight = lowestWeight
-			log.Infof("mode: calibrating")
+			log.WithFields(log.Fields{
+				"mode": "calibrating",
+			}).Debugf(logLine)
 		} else if !state.Enabled {
 			command.mode = modeOff
-			log.Infof("mode: off")
+			log.WithFields(log.Fields{
+				"mode": "off",
+			}).Debugf(logLine)
 		} else {
 			command.mode = modeNormal
 			switch state.Behaviour {
@@ -152,27 +157,37 @@ func (t *Tacx) startSerialLoop() {
 					targetWatts:  state.TargetWatts,
 					currentSpeed: lastResponse.speed,
 				})
-				log.Infof("mode: normal; behaviour: erg; watts: %v; speed: %v; target %v", state.TargetWatts, lastResponse.speed, command.targetLoad)
+				log.WithFields(log.Fields{
+					"mode":      "normal",
+					"behaviour": "erg",
+				}).Debugf(logLine)
 			case BehaviourSimulator:
-				command.weight = uint8(state.Weight)
+				command.weight = config.Weight
 				targetWattsForSimulator := getWattsForSimulator(targetLoadForSimulatorArgs{
-					currentSpeed:   lastResponse.speed,
-					weight:         state.Weight,
-					windSpeed:      state.WindSpeed,
-					draftingFactor: state.DraftingFactor,
-					gradient:       state.Gradient,
+					currentSpeed:      lastResponse.speed,
+					weight:            config.Weight,
+					windSpeed:         state.WindSpeed,
+					gradient:          state.Gradient,
+					rollingResistance: state.RollingResistance,
+					windResistance:    state.WindResistance,
 				})
 				command.targetLoad = getTargetLoad(targetLoadArgs{
 					targetWatts:  targetWattsForSimulator,
 					currentSpeed: lastResponse.speed,
 				})
-				log.Infof("mode: normal; behaviour: simulator; gradient: %v; speed: %v; target %v", state.Gradient, lastResponse.speed, command.targetLoad)
+				log.WithFields(log.Fields{
+					"mode":      "normal",
+					"behaviour": "sim",
+				}).Debugf(logLine)
 			}
 		}
 
 		controlResponse, err := sendControl(commander, command)
 		if err != nil {
-			log.Fatalf("unable to execute main command: %+v", err)
+			log.Errorf("unable to execute main command: %+v", err)
+			// allow this to occasionally fail
+			// TODO: count failures and exit after reaching limit
+			continue
 		}
 
 		if calibrating {
@@ -197,24 +212,32 @@ func (t *Tacx) startSerialLoop() {
 				}
 				calibrationLastLoads = append(calibrationLastLoads, float64(controlResponse.currentLoad))
 
-				if untilMaximum > 0 {
-					if untilMinimum < 0 {
-						quartile1, _ := stats.Percentile(calibrationLastLoads, 25)
-						quartile3, _ := stats.Percentile(calibrationLastLoads, 75)
-						stable := quartile3-quartile1 <= calibrationTolerance
-						average := quartile1 + ((quartile3 - quartile1) / 2)
-						log.Infof("calculating. stable: %t; quartile1: %.2f; quartile3: %.2f; average: %.2f", stable, quartile1, quartile3, average)
+				if untilMinimum < 0 {
+					quartile1, _ := stats.Percentile(calibrationLastLoads, 25)
+					quartile3, _ := stats.Percentile(calibrationLastLoads, 75)
+					stable := quartile3-quartile1 <= calibrationTolerance
+					average := quartile1 + ((quartile3 - quartile1) / 2)
+					log.WithFields(log.Fields{
+						"stable":    fmt.Sprintf("%t", stable),
+						"quartile1": fmt.Sprintf("%.2f", quartile1),
+						"quartile3": fmt.Sprintf("%.2f", quartile3),
+						"average":   fmt.Sprintf("%.2f", average),
+					}).Infof("calibrated?")
 
-						if stable {
-							calibrationResult = uint16(average)
-							calibrating = false
+					if stable || untilMaximum > 0 {
+						calibrationResult = uint16(average)
+						calibrating = false
+						if !stable {
+							log.Errorf("calibration aborted: maximum time reached. using last average")
 						}
 					}
-					log.Infof("calibrating. minimum: %t; remaining: %.0f; speed: %v; resistance: %v;", untilMinimum < 0, untilMinimum.Seconds(), controlResponse.speed, controlResponse.currentLoad)
-				} else {
-					calibrating = false
-					log.Fatal("calibration aborted: maximum time reached.")
 				}
+				log.WithFields(log.Fields{
+					"minimum":   fmt.Sprintf("%t", untilMinimum < 0),
+					"remaining": fmt.Sprintf("%.0f", untilMinimum.Seconds()),
+					"speed":     fmt.Sprintf("%v", controlResponse.speed),
+					"load":      fmt.Sprintf("%v", controlResponse.currentLoad),
+				}).Infof("calibrating")
 			}
 		}
 
