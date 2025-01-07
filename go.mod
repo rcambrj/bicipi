@@ -1,4 +1,4 @@
-module github.com/rcambrj/tacxble
+module github.com/rcambrj/bicipi
 
 go 1.23
 

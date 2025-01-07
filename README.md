@@ -4,7 +4,7 @@ status: incomplete
 
 **bicipi**: pronounced _bee-see-pie_, is the fusion of the Spanish word for bike + Raspberry Pi
 
-Connects to a USB Tacx T1941 trainer and exposes it via Bluetooth Low Energy for use with Zwift, TrainerRoad or MyWhoosh.
+Connects to a USB Tacx Fortius T1941 trainer and exposes it via Bluetooth Low Energy for use with Zwift, TrainerRoad or MyWhoosh.
 
 ## Objectives
 

@@ -126,7 +126,7 @@ func deserializeResponse(response []byte) ([]byte, error) {
 		"match":      checksumMatches,
 		"received":   checksumReceived,
 		"calculated": checksumCalculated,
-	}).Tracef("checksum")
+	}).Trace("checksum")
 	if !checksumMatches {
 		return []byte{}, fmt.Errorf("checksum does not match")
 	}
@@ -184,12 +184,12 @@ func getResponse(port SerialPort) ([]byte, error) {
 			if tries == 0 {
 				return []byte{}, fmt.Errorf("no serial response received")
 			}
-			log.WithFields(log.Fields{"frame": frame}).Tracef("received partial frame")
+			log.WithFields(log.Fields{"frame": frame}).Trace("received partial frame")
 			tries--
 			continue
 		}
 
-		log.WithFields(log.Fields{"frame": frame}).Tracef("received whole frame")
+		log.WithFields(log.Fields{"frame": frame}).Trace("received whole frame")
 		return frame, nil
 	}
 }
@@ -207,7 +207,7 @@ type C struct {
 }
 
 func (c *C) sendCommand(command []byte) ([]byte, error) {
-	log.WithFields(log.Fields{"command": command}).Tracef("sending serial command")
+	log.WithFields(log.Fields{"command": command}).Trace("sending serial command")
 	outFrame, err := serializeCommand(command)
 	if err != nil {
 		return []byte{}, fmt.Errorf("unable to serialize command: %w", err)
@@ -219,7 +219,7 @@ func (c *C) sendCommand(command []byte) ([]byte, error) {
 	if err != nil {
 		return []byte{}, fmt.Errorf("unable to write to serial port: %w", err)
 	}
-	log.WithFields(log.Fields{"outFrame": outFrame}).Tracef("sent serial frame")
+	log.WithFields(log.Fields{"outFrame": outFrame}).Trace("sent serial frame")
 
 	inFrame, err := getResponse(c.port)
 	if err != nil {
@@ -230,6 +230,6 @@ func (c *C) sendCommand(command []byte) ([]byte, error) {
 		return []byte{}, fmt.Errorf("unable to deserialize response: %w", err)
 	}
 
-	log.WithFields(log.Fields{"response": response}).Tracef("received serial response")
+	log.WithFields(log.Fields{"response": response}).Trace("received serial response")
 	return response, nil
 }

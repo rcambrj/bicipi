@@ -153,7 +153,7 @@ func (f *FTMS) receiveFTMSOperation(client bluetooth.Connection, offset int, val
 		log.Trace("ignoring ble command echo")
 		return
 	case FMCPOpCodeRequestControl:
-		log.Debugf("ble received FTMS control request")
+		log.Debug("ble received FTMS control request")
 		err := writeFMCPResultCode(&f.serviceManager, FMCPOpCodeRequestControl, FMCPResultCodeSuccess)
 		if err != nil {
 			log.Fatalf("unable to accept control: %v", err)
@@ -163,7 +163,7 @@ func (f *FTMS) receiveFTMSOperation(client bluetooth.Connection, offset int, val
 		if err != nil {
 			log.Fatalf("unable to read ble SetTargetPower command: %v", err)
 		}
-		log.WithFields(log.Fields{"command": fmt.Sprintf("%+v", command)}).Debugf("ble command SetTargetPower")
+		log.WithFields(log.Fields{"command": fmt.Sprintf("%+v", command)}).Debug("ble command SetTargetPower")
 
 		f.channel <- FTMSEvent{
 			Mode:        ModeTargetPower,
@@ -179,12 +179,12 @@ func (f *FTMS) receiveFTMSOperation(client bluetooth.Connection, offset int, val
 			log.Errorf("unable to SetTargetPower on FMCP: %v", err)
 		}
 	case FMCPOpCodeSetIndoorBikeSimulation:
-		log.Debugf("ble received FTMS set indoor bike simulation request")
+		log.Debug("ble received FTMS set indoor bike simulation request")
 		command, err := readFMCPIndoorBikeSimulation(value)
 		if err != nil {
 			log.Fatalf("unable to read ble SetIndoorBikeSimulation command: %v", err)
 		}
-		log.WithFields(log.Fields{"command": fmt.Sprintf("%+v", command)}).Debugf("ble command SetIndoorBikeSimulation")
+		log.WithFields(log.Fields{"command": fmt.Sprintf("%+v", command)}).Debug("ble command SetIndoorBikeSimulation")
 
 		f.channel <- FTMSEvent{
 			Mode:              ModeIndoorBikeSimulation,
@@ -206,7 +206,7 @@ func (f *FTMS) receiveFTMSOperation(client bluetooth.Connection, offset int, val
 		log.WithFields(log.Fields{
 			"offset": offset,
 			"value":  value,
-		}).Errorf("FTMS operation opcode not implemented")
+		}).Error("FTMS operation opcode not implemented")
 	}
 }
 
@@ -214,5 +214,5 @@ func (f *FTMS) receiveCyclingPowerOperation(client bluetooth.Connection, offset 
 	log.WithFields(log.Fields{
 		"offset": offset,
 		"value":  value,
-	}).Errorf("Cycling Power operation opcode not implemented")
+	}).Error("Cycling Power operation opcode not implemented")
 }

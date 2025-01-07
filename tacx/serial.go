@@ -20,7 +20,7 @@ func connect(device string) (serial.Port, error) {
 		}
 		device = devices[0]
 	}
-	log.WithFields(log.Fields{"device": device}).Infof("connecting to serial port")
+	log.WithFields(log.Fields{"device": device}).Info("connecting to serial port")
 
 	mode := &serial.Mode{
 		BaudRate: 19200,
@@ -48,7 +48,7 @@ func connect(device string) (serial.Port, error) {
 		return nil, fmt.Errorf("unable to configure serial timeout: %w", err)
 	}
 
-	log.WithFields(log.Fields{"device": device}).Infof("connected to serial port")
+	log.WithFields(log.Fields{"device": device}).Info("connected to serial port")
 
 	return port, nil
 }

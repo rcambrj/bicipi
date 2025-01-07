@@ -58,7 +58,7 @@ func getFitnessMachineFeatures() []byte {
 	bytes = binary.LittleEndian.AppendUint32(bytes, featuresBitmask)
 	bytes = binary.LittleEndian.AppendUint32(bytes, targetSettingsBitmask)
 	// FortiusAnt: 00000010 01000000 00000000 00000000 00001000 00100000 00000000 00000000
-	log.WithFields(log.Fields{"characteristic": formatBinary(bytes)}).Tracef("defining ble FitnessMachineFeatures")
+	log.WithFields(log.Fields{"characteristic": formatBinary(bytes)}).Trace("defining ble FitnessMachineFeatures")
 	return bytes
 }
 
@@ -67,7 +67,7 @@ func getIndoorBikeData() []byte {
 	bytes := make([]byte, 4*16/8)
 	binary.LittleEndian.PutUint16(bytes, bitmask)
 	// FortiusAnt: 01000000 00000010 01111011 00000000 11001000 00000001 01011001 00000000
-	log.WithFields(log.Fields{"characteristic": formatBinary(bytes)}).Tracef("defining ble IndoorBikeData")
+	log.WithFields(log.Fields{"characteristic": formatBinary(bytes)}).Trace("defining ble IndoorBikeData")
 	return bytes
 }
 
@@ -75,7 +75,7 @@ func getFitnessMachineStatus() []byte {
 	// Server status sent to Collector
 	bytes := []byte{0x00, 0x00}
 	// FortiusAnt: 00000000 00000000
-	log.WithFields(log.Fields{"characteristic": formatBinary(bytes)}).Tracef("defining ble FitnessMachineStatus")
+	log.WithFields(log.Fields{"characteristic": formatBinary(bytes)}).Trace("defining ble FitnessMachineStatus")
 	return bytes
 }
 
@@ -83,7 +83,7 @@ func getFitnessMachineControlPoint() []byte {
 	// Collector commands sent to Server
 	bytes := []byte{0x00, 0x00}
 	// FortiusAnt: 00000000 00000000
-	log.WithFields(log.Fields{"characteristic": formatBinary(bytes)}).Tracef("defining ble FitnessMachineControlPoint")
+	log.WithFields(log.Fields{"characteristic": formatBinary(bytes)}).Trace("defining ble FitnessMachineControlPoint")
 	return bytes
 }
 
@@ -93,6 +93,6 @@ func getSupportedPowerRange() []byte {
 	bytes = binary.LittleEndian.AppendUint16(bytes, 1000) // max
 	bytes = binary.LittleEndian.AppendUint16(bytes, 1)    // step
 	// FortiusAnt: 00000000 00000000 11101000 00000011 00000001 00000000
-	log.WithFields(log.Fields{"characteristic": formatBinary(bytes)}).Tracef("defining ble SupportedPowerRange")
+	log.WithFields(log.Fields{"characteristic": formatBinary(bytes)}).Trace("defining ble SupportedPowerRange")
 	return bytes
 }

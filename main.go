@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/rcambrj/tacxble/bicipi"
+	"github.com/rcambrj/bicipi/bicipi"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -11,7 +11,7 @@
   # - ttyS0: for Tegra (Jetson TX1)
   # - ttyAMA0: for QEMU's -machine virt
   boot.kernelParams = [
-    "console=ttyS0,115200n8"
+    # "console=ttyS0,115200n8"
     # "console=ttyAMA0,115200n8" # conflicts with bluetooth
     "console=tty0"
   ];
@@ -85,6 +85,6 @@
   };
 
   environment.systemPackages = with pkgs; [
-    flake.packages.${pkgs.stdenv.hostPlatform.system}.tacxble
+    flake.packages.${pkgs.stdenv.hostPlatform.system}.bicipi
   ];
 }

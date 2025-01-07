@@ -11,7 +11,7 @@ import (
 
 type Config struct {
 	Weight               uint8
-	Device               string
+	SerialDevice         string
 	Calibrate            bool
 	Slow                 bool
 	CalibrationSpeed     int
@@ -96,7 +96,7 @@ func (t *Tacx) startEventLoop() {
 
 func (t *Tacx) startSerialLoop() {
 	config := t.config
-	port, err := connect(config.Device)
+	port, err := connect(config.SerialDevice)
 
 	if err != nil {
 		log.Fatalf("unable to connect to tacx: %v", err)
@@ -142,12 +142,12 @@ func (t *Tacx) startSerialLoop() {
 			command.weight = lowestWeight
 			log.WithFields(log.Fields{
 				"mode": "calibrating",
-			}).Debugf(logLine)
+			}).Debug(logLine)
 		} else if !state.Enabled {
 			command.mode = modeOff
 			log.WithFields(log.Fields{
 				"mode": "off",
-			}).Debugf(logLine)
+			}).Debug(logLine)
 		} else {
 			command.mode = modeNormal
 			switch state.Behaviour {
@@ -160,7 +160,7 @@ func (t *Tacx) startSerialLoop() {
 				log.WithFields(log.Fields{
 					"mode":      "normal",
 					"behaviour": "erg",
-				}).Debugf(logLine)
+				}).Debug(logLine)
 			case BehaviourSimulator:
 				command.weight = config.Weight
 				targetWattsForSimulator := getWattsForSimulator(targetLoadForSimulatorArgs{
@@ -178,7 +178,7 @@ func (t *Tacx) startSerialLoop() {
 				log.WithFields(log.Fields{
 					"mode":      "normal",
 					"behaviour": "sim",
-				}).Debugf(logLine)
+				}).Debug(logLine)
 			}
 		}
 
@@ -201,7 +201,7 @@ func (t *Tacx) startSerialLoop() {
 				if controlResponse.speed > uint16(calibrationSpeed)/2 {
 					calibrationStartedAt = time.Now()
 				} else {
-					log.Infof("waiting for calibration: pedal once then stop")
+					log.Info("waiting for calibration: pedal once then stop")
 				}
 			} else {
 				untilMinimum := time.Until(calibrationStartedAt.Add(calibrationDurationMin))
@@ -222,13 +222,13 @@ func (t *Tacx) startSerialLoop() {
 						"quartile1": fmt.Sprintf("%.2f", quartile1),
 						"quartile3": fmt.Sprintf("%.2f", quartile3),
 						"average":   fmt.Sprintf("%.2f", average),
-					}).Infof("calibrated?")
+					}).Info("calibrated?")
 
 					if stable || untilMaximum > 0 {
 						calibrationResult = uint16(average)
 						calibrating = false
 						if !stable {
-							log.Errorf("calibration aborted: maximum time reached. using last average")
+							log.Error("calibration aborted: maximum time reached. using last average")
 						}
 					}
 				}
@@ -237,7 +237,7 @@ func (t *Tacx) startSerialLoop() {
 					"remaining": fmt.Sprintf("%.0f", untilMinimum.Seconds()),
 					"speed":     fmt.Sprintf("%v", controlResponse.speed),
 					"load":      fmt.Sprintf("%v", controlResponse.currentLoad),
-				}).Infof("calibrating")
+				}).Info("calibrating")
 			}
 		}
 

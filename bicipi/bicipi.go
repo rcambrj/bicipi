@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rcambrj/tacxble/ftms"
-	"github.com/rcambrj/tacxble/tacx"
+	"github.com/rcambrj/bicipi/ftms"
+	"github.com/rcambrj/bicipi/tacx"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -29,7 +29,7 @@ func Start(config Config) {
 
 	tacxService := tacx.MakeService(tacx.Config{
 		Weight:               config.Weight,
-		Device:               config.SerialDevice,
+		SerialDevice:         config.SerialDevice,
 		Calibrate:            config.Calibrate,
 		Slow:                 config.Slow,
 		CalibrationSpeed:     config.CalibrationSpeed,
@@ -43,7 +43,7 @@ func Start(config Config) {
 	})
 
 	tacxService.On(func(event tacx.TacxEvent) {
-		log.WithFields(log.Fields{"event": fmt.Sprintf("%+v", event)}).Infof("tacx event")
+		log.WithFields(log.Fields{"event": fmt.Sprintf("%+v", event)}).Info("tacx event")
 		tacxReady = event.Ready
 
 		if tacxReady {
@@ -59,11 +59,11 @@ func Start(config Config) {
 		}
 	})
 	ftmsService.On(func(event ftms.FTMSEvent) {
-		log.WithFields(log.Fields{"event": fmt.Sprintf("%+v", event)}).Infof("ble event")
+		log.WithFields(log.Fields{"event": fmt.Sprintf("%+v", event)}).Info("ble event")
 
 		if !tacxReady {
 			// this shouldn't happen as FTMS starts after ready
-			log.Fatalf("unable to set tacx state: tacx not ready")
+			log.Fatal("unable to set tacx state: tacx not ready")
 		}
 
 		if event.Mode == ftms.ModeTargetPower {
