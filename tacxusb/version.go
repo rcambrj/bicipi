@@ -29,7 +29,7 @@ func getVersion(t commander) (tacxcommon.Version, error) {
 			return tacxcommon.Version{}, ErrReceivedInvalidFrame
 		}
 
-		version, err := tacxcommon.GetVersionFromResponseBytes(response[24+4:])
+		version, err := tacxcommon.GetVersionFromResponseBytes(response[24:48])
 		if err != nil {
 			return tacxcommon.Version{}, fmt.Errorf("unable to parse usb version: %w", err)
 		}

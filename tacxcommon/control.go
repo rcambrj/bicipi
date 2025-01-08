@@ -55,9 +55,38 @@ func GetControlCommandBytes(command ControlCommand) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+type controlResponseRaw struct {
+	_           uint32
+	Distance    uint32
+	Speed       uint16
+	_           uint16
+	AverageLoad int16
+	CurrentLoad int16
+	TargetLoad  int16
+	KeepAlive   uint8
+	_           uint8
+	Cadence     uint8
+}
+
+func GetControlResponseFromBytes(response []byte) (ControlResponse, error) {
+	buf := bytes.NewReader(response)
+	responseRaw := controlResponseRaw{}
+	if err := binary.Read(buf, binary.LittleEndian, &responseRaw); err != nil {
+		return ControlResponse{}, err
+	}
+
+	return ControlResponse{
+		Speed:       responseRaw.Speed,
+		CurrentLoad: responseRaw.CurrentLoad,
+		TargetLoad:  responseRaw.TargetLoad,
+		Keepalive:   responseRaw.KeepAlive,
+		Cadence:     responseRaw.Cadence,
+	}, nil
+}
+
 // ControlResponse could contain more information if the connection is USB.
 // in order to reduce maintenance, ControlResponse contains only what's
-// supported on all connection protocols.
+// supported on all connection protocols (ie. what comes from the motor brake)
 // If the extra USB data is necessary, then ControlResponse should not live here
 // as the responses for serial vs USB will differ
 type ControlResponse struct {

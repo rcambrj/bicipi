@@ -16,13 +16,8 @@ func TestGetVersion(t *testing.T) {
 	tests := []test{
 		{
 			description: "valid",
-			// whether:
-			// * via serial directly to motor brake
-			// * via USB through the head unit
-			// both responses will contain the motor brake version information
-			// but with different wrappers (prefixed and suffixed)
-			response: []byte{0x07, 0x10, 0x00, 0x00, 0xae, 0x25, 0x7e, 0x18, 0x15, 0x08, 0x00, 0x00},
-			error:    nil,
+			response:    []byte{0x03, 0x0C, 0x00, 0x00, 0x07, 0x10, 0x00, 0x00, 0xae, 0x25, 0x7e, 0x18, 0x15, 0x08, 0x00, 0x00},
+			error:       nil,
 			want: Version{
 				Model:             "T1941",
 				ManufactureNumber: 20366,

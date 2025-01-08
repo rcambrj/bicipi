@@ -28,6 +28,7 @@ func parseVersionResponseBytes(response []byte) (versionResponseRaw, error) {
 }
 
 type versionResponseRaw struct {
+	_         uint32
 	Firmware0 uint8
 	Firmware1 uint8
 	Firmware2 uint8
