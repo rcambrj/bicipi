@@ -11,12 +11,11 @@ import (
 func main() {
 	logLevels := []string{"trace", "debug", "info", "warn", "error"}
 
-	weight := flag.Uint("weight", 80, "The approximate weight of the rider + bicycle, not used in erg mode.")
-	serialDevice := flag.String("serial", "", "The serial device to which Tacx motorbrake is connected. (default is first one found)")
-	useUSB := flag.Bool("usb", true, "Use USB to connect to the Tacx motorbrake via headunit. (default. --usb=false to use serial)")
+	weight := flag.Uint("weight", 80, "The approximate weight of the rider + bicycle, used only in simulator mode (Zwift / MyWhoosh).")
+	serialDevice := flag.String("serial", "", "The serial device to which Tacx motorbrake is connected. (default is to use USB)")
 	bluetoothName := flag.String("bluetooth-name", "bicipi", "The bluetooth device name to advertise")
 	logLevel := flag.String("loglevel", "info", fmt.Sprintf("The log level. May be one of %v.", logLevels))
-	calibrate := flag.Bool("calibrate", true, "Whether to enable initial calibration. (default. --calibrate=false to disable)")
+	calibrate := flag.Bool("calibrate", true, "Whether to enable initial calibration. (--calibrate=false to disable)")
 	slow := flag.Bool("slow", false, "Whether to poll slowly so that logs are easier to follow.")
 	calibrationSpeed := flag.Int("calibration-speed", 20, "How fast in km/h to spin the tyre during calibration.")
 	calibrationMin := flag.Int("calibration-min", 300, "How long in seconds to warm up the motor and tyre during calibration.")
@@ -33,7 +32,6 @@ func main() {
 	config := bicipi.Config{
 		Weight:               uint8(*weight),
 		SerialDevice:         *serialDevice,
-		UseUSB:               *useUSB,
 		BluetoothName:        *bluetoothName,
 		Calibrate:            *calibrate,
 		Slow:                 *slow,

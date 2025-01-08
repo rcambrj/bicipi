@@ -17,6 +17,32 @@ Connects to a USB Tacx Fortius T1941 trainer and exposes it via Bluetooth Low En
 * Support popular apps:
 	* Zwift, TrainerRoad, MyWhoosh
 
+## Usage
+
+```
+Usage of bicipi:
+  -bluetooth-name string
+    	The bluetooth device name to advertise (default "bicipi")
+  -calibrate
+    	Whether to enable initial calibration. (--calibrate=false to disable) (default true)
+  -calibration-max int
+    	How long in seconds before calibration is abandoned. (default 600)
+  -calibration-min int
+    	How long in seconds to warm up the motor and tyre during calibration. (default 300)
+  -calibration-speed int
+    	How fast in km/h to spin the tyre during calibration. (default 20)
+  -calibration-tolerance int
+    	How fussy to be when considering calibration complete. Lower is more fussy. (default 10)
+  -loglevel string
+    	The log level. May be one of [trace debug info warn error]. (default "info")
+  -serial string
+    	The serial device to which Tacx motorbrake is connected. (default is to use USB)
+  -slow
+    	Whether to poll slowly so that logs are easier to follow.
+  -weight uint
+    	The approximate weight of the rider + bicycle, used only in simulator mode (Zwift / MyWhoosh). (default 80)
+```
+
 ## FortiusAnt
 
 FortiusAnt by WouterJD is a comprehensive software package. It connects to a wide range of hardware, provides a GUI, exposes the device over BLE and ANT+, has support for heart rate monitors, and even has an "exercise bike" mode which uses the trainer's buttons to change resistance... and I'm absolutely certain that there are more features which I've missed.

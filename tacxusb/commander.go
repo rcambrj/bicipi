@@ -83,7 +83,7 @@ var (
 // is valid - check those
 // it seems that the incorrect response is sometimes due to a delay: perhaps the
 // headunit takes some time to issue a request to the motor brake and update
-// its internal cache? it then seems that this cache expires after ~1 second.
+// its internal cache? it then seems that this cache expires after ~1-2 seconds.
 // TODO: there might be a checksum in the frame, check it
 func isValidFrame(frame []byte, frameType []byte) bool {
 	return len(frame) >= 48 && bytes.Equal(frame[0:2], startOfFrame) && bytes.Equal(frame[24:26], frameType)

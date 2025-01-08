@@ -109,10 +109,10 @@ func (t *Tacx) startTacxLoop() {
 
 	var device TacxDevice
 	var err error
-	if config.UseUSB {
-		device, err = tacxusb.MakeTacxDevice()
-	} else {
+	if len(config.SerialDevice) > 0 {
 		device, err = tacxserial.MakeTacxDevice(config.SerialDevice)
+	} else {
+		device, err = tacxusb.MakeTacxDevice()
 	}
 	if err != nil {
 		log.Fatalf("unable to connect to tacx: %v", err)
