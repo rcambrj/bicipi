@@ -1,6 +1,7 @@
 package tacx
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -198,7 +199,10 @@ func (t *Tacx) startTacxLoop() {
 
 		controlResponse, err := device.SendControl(command)
 		if err != nil {
-			log.Errorf("unable to execute main command: %+v", err)
+			// tacxusb.ErrReceivedInvalidFrame is common and normal
+			if !errors.Is(err, tacxusb.ErrReceivedInvalidFrame) {
+				log.Errorf("unable to execute main command: %+v", err)
+			}
 			// allow this to occasionally fail
 			// TODO: count failures and exit after reaching limit
 			continue
@@ -233,7 +237,7 @@ func (t *Tacx) startTacxLoop() {
 					average := quartile1 + ((quartile3 - quartile1) / 2)
 					log.WithFields(log.Fields{
 						"stable":    fmt.Sprintf("%t", stable),
-						"remaining": fmt.Sprintf("%.0f", untilMinimum.Seconds()),
+						"remaining": fmt.Sprintf("%.0f", untilMaximum.Seconds()),
 						"speed":     fmt.Sprintf("%v", controlResponse.Speed),
 						"load":      fmt.Sprintf("%v", controlResponse.CurrentLoad),
 						"quartile1": fmt.Sprintf("%.2f", quartile1),
@@ -241,7 +245,7 @@ func (t *Tacx) startTacxLoop() {
 						"average":   fmt.Sprintf("%.2f", average),
 					}).Info("calibrating")
 
-					if stable || untilMaximum > 0 {
+					if stable || untilMaximum < 0 {
 						calibrationResult = uint16(average)
 						calibrating = false
 						if !stable {
