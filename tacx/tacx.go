@@ -8,6 +8,7 @@ import (
 	"github.com/montanaflynn/stats"
 	"github.com/rcambrj/bicipi/tacxcommon"
 	"github.com/rcambrj/bicipi/tacxserial"
+	"github.com/rcambrj/bicipi/tacxusb"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -100,7 +101,13 @@ func (t *Tacx) startEventLoop() {
 func (t *Tacx) startTacxLoop() {
 	config := t.config
 
-	device, err := tacxserial.MakeTacxDevice(config.SerialDevice)
+	var device TacxDevice
+	var err error
+	if config.UseUSB {
+		device, err = tacxusb.MakeTacxDevice()
+	} else {
+		device, err = tacxserial.MakeTacxDevice(config.SerialDevice)
+	}
 	if err != nil {
 		log.Fatalf("unable to connect to tacx: %v", err)
 	}

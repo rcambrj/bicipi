@@ -1,4 +1,4 @@
-package tacxserial
+package tacxusb
 
 import (
 	"bytes"
@@ -35,6 +35,13 @@ func getVersion(t commander) (tacxcommon.Version, error) {
 	if err != nil {
 		return tacxcommon.Version{}, fmt.Errorf("unable to get version: %w", err)
 	}
+
+	// head unit
+	// 18 204 18 0 0 2 0 0 9 0 0 0 0 0 0 0 0 0 13 10 0 0 0 0
+	// motor brake
+	// 0 0 0 0 0 0 0 0 7 5 2 2 64 0 0 0 0 0 0 0 0 0 0 0
+	// padding
+	// 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 
 	versionRaw, err := parseVersionResponseBytes(response)
 	if err != nil {

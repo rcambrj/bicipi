@@ -12,7 +12,7 @@ var usbProductId gousb.ID = 0x1932
 var usbInEndpointAddress = 0x82
 var usbOutEndpointAddress = 0x02
 
-type commander struct {
+type c struct {
 	ctx         *gousb.Context
 	dev         *gousb.Device
 	iface       *gousb.Interface
@@ -21,7 +21,7 @@ type commander struct {
 	outEndpoint *gousb.OutEndpoint
 }
 
-func makeCommander() (*commander, error) {
+func makeCommander() (commander, error) {
 	ctx := gousb.NewContext()
 	ctx.Debug(1)
 
@@ -29,33 +29,38 @@ func makeCommander() (*commander, error) {
 		return desc.Vendor == usbVendorId && desc.Product == usbProductId
 	})
 	if err != nil {
-		return &commander{}, fmt.Errorf("unable to open usb devices: %w", err)
+		return &c{}, fmt.Errorf("unable to open usb devices: %w", err)
 	}
 
 	if len(devs) < 1 {
-		return &commander{}, fmt.Errorf("unable to find usb device. is it connected?")
+		return &c{}, fmt.Errorf("unable to find usb device. is it connected?")
 	}
 	if len(devs) > 1 {
-		return &commander{}, fmt.Errorf("found too many matching usb devices")
+		return &c{}, fmt.Errorf("found too many matching usb devices")
 	}
 	dev := devs[0]
-	log.WithFields(log.Fields{"dev": fmt.Sprintf("%+v", dev)}).Info("found usb device")
 
 	iface, ifaceDone, err := dev.DefaultInterface()
 	if err != nil {
-		return &commander{}, fmt.Errorf("unable to open usb interface: %w", err)
+		return &c{}, fmt.Errorf("unable to open usb interface: %w", err)
 	}
 
 	inEndpoint, err := iface.InEndpoint(usbInEndpointAddress)
 	if err != nil {
-		return &commander{}, fmt.Errorf("unable to open usb input endpoint: %w", err)
+		return &c{}, fmt.Errorf("unable to open usb input endpoint: %w", err)
 	}
 	outEndpoint, err := iface.OutEndpoint(usbOutEndpointAddress)
 	if err != nil {
-		return &commander{}, fmt.Errorf("unable to open usb output endpoint: %w", err)
+		return &c{}, fmt.Errorf("unable to open usb output endpoint: %w", err)
 	}
 
-	return &commander{
+	log.WithFields(log.Fields{
+		"iface":       fmt.Sprintf("%+v", iface),
+		"inEndpoint":  fmt.Sprintf("%+v", inEndpoint),
+		"outEndpoint": fmt.Sprintf("%+v", outEndpoint),
+	}).Info("connected to usb device")
+
+	return &c{
 		ctx:         ctx,
 		dev:         dev,
 		iface:       iface,
@@ -65,7 +70,7 @@ func makeCommander() (*commander, error) {
 	}, nil
 }
 
-func (c *commander) sendCommand(command []byte) ([]byte, error) {
+func (c *c) sendCommand(command []byte) ([]byte, error) {
 	log.WithFields(log.Fields{"command": command}).Trace("sending usb command")
 
 	// TODO: reset input buffer before sending command
@@ -74,16 +79,17 @@ func (c *commander) sendCommand(command []byte) ([]byte, error) {
 		return []byte{}, fmt.Errorf("unable to write to usb port: %w", err)
 	}
 
-	response := make([]byte, 0, 64)
+	response := make([]byte, 64)
 	_, err = c.inEndpoint.Read(response)
 	if err != nil {
 		return []byte{}, fmt.Errorf("unable to read from usb port: %w", err)
 	}
 
+	log.WithFields(log.Fields{"response": response}).Trace("received usb response")
 	return response, nil
 }
 
-func (u *commander) close() error {
+func (u *c) close() error {
 	if u.iface != nil {
 		u.iface.Close()
 	}

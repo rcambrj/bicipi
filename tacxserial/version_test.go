@@ -35,11 +35,10 @@ func TestGetVersion(t *testing.T) {
 			error:       nil,
 			want: tacxcommon.Version{
 				Model:             "T1941",
-				ManufactureYear:   2009,
 				ManufactureNumber: 20366,
 				FirmwareVersion:   "00.00.10.07",
-				Serial:            410920366,
-				Date:              "08-15",
+				Serial:            410920366, // sticker shows 41092366 though?
+				Date:              "2009-08-15",
 			},
 		},
 	}
@@ -49,7 +48,7 @@ func TestGetVersion(t *testing.T) {
 			mockSendCommandErr: tc.error,
 		}
 
-		if got, err := GetVersion(mc); !reflect.DeepEqual(got, tc.want) || err != nil {
+		if got, err := getVersion(mc); !reflect.DeepEqual(got, tc.want) || err != nil {
 			t.Errorf("getVersion() [%v] => %#v, %v; want %#v", tc.description, got, err, tc.want)
 		}
 	}

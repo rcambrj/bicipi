@@ -64,7 +64,7 @@ type controlResponseRaw struct {
 
 // this is the main function to send and receive data from tacx
 // it both sends the target status and receives the reported status
-func SendControl(t commander, command tacxcommon.ControlCommand) (tacxcommon.ControlResponse, error) {
+func sendControl(t commander, command tacxcommon.ControlCommand) (tacxcommon.ControlResponse, error) {
 	log.WithFields(log.Fields{"command": fmt.Sprintf("%+v", command)}).Debug("sending tacx status")
 
 	var target int16

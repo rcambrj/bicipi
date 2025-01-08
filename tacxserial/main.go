@@ -6,18 +6,14 @@ import (
 	"github.com/rcambrj/bicipi/tacxcommon"
 )
 
-func MakeTacxDevice(port string) (TacxSerialDevice, error) {
+func MakeTacxDevice(port string) (*TacxSerialDevice, error) {
 	commander, err := makeCommander(port)
 	if err != nil {
-		return TacxSerialDevice{}, fmt.Errorf("unable to create tacx serial device: %w", err)
+		return &TacxSerialDevice{}, fmt.Errorf("unable to create tacx serial device: %w", err)
 	}
-	return TacxSerialDevice{
+	return &TacxSerialDevice{
 		commander: commander,
 	}, nil
-}
-
-type TacxSerialDevice struct {
-	commander commander
 }
 
 type commander interface {
@@ -25,11 +21,15 @@ type commander interface {
 	close() error
 }
 
+type TacxSerialDevice struct {
+	commander commander
+}
+
 func (td *TacxSerialDevice) GetVersion() (tacxcommon.Version, error) {
-	return GetVersion(td.commander)
+	return getVersion(td.commander)
 }
 func (td *TacxSerialDevice) SendControl(command tacxcommon.ControlCommand) (tacxcommon.ControlResponse, error) {
-	return SendControl(td.commander, command)
+	return sendControl(td.commander, command)
 }
 func (td *TacxSerialDevice) Close() error {
 	return td.commander.close()
