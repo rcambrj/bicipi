@@ -1,25 +1,17 @@
-package tacx
+package tacxserial
 
 import (
 	"fmt"
 
+	"github.com/rcambrj/bicipi/tacxcommon"
 	log "github.com/sirupsen/logrus"
 )
 
-type version struct {
-	model             string
-	manufactureYear   int
-	manufactureNumber int
-	firmwareVersion   string
-	serial            int32
-	date              string
-}
-
-func getVersion(t Commander) (version, error) {
+func GetVersion(t commander) (tacxcommon.Version, error) {
 	log.Info("requesting tacx version...")
 	response, err := t.sendCommand([]byte{0x02, 0x00, 0x00, 0x00})
 	if err != nil {
-		return version{}, fmt.Errorf("unable to get version: %w", err)
+		return tacxcommon.Version{}, fmt.Errorf("unable to get version: %w", err)
 	}
 
 	firmwareVersion := fmt.Sprintf("%02X.%02X.%02X.%02X", response[7], response[6], response[5], response[4])
@@ -30,13 +22,13 @@ func getVersion(t Commander) (version, error) {
 	manufactureNumber := int(serial % 100000)
 	model := fmt.Sprintf("T19%v", int(serial/10000000))
 
-	version := version{
-		model:             model,
-		manufactureYear:   manufactureYear,
-		manufactureNumber: manufactureNumber,
-		firmwareVersion:   firmwareVersion,
-		serial:            serial,
-		date:              date,
+	version := tacxcommon.Version{
+		Model:             model,
+		ManufactureYear:   manufactureYear,
+		ManufactureNumber: manufactureNumber,
+		FirmwareVersion:   firmwareVersion,
+		Serial:            serial,
+		Date:              date,
 	}
 	log.WithFields(log.Fields{"version": fmt.Sprintf("%+v", version)}).Info("received tacx version")
 	return version, nil

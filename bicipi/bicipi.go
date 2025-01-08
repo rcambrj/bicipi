@@ -12,6 +12,7 @@ import (
 type Config struct {
 	Weight               uint8
 	SerialDevice         string
+	UseUSB               bool
 	BluetoothName        string
 	Calibrate            bool
 	Slow                 bool
@@ -30,6 +31,7 @@ func Start(config Config) {
 	tacxService := tacx.MakeService(tacx.Config{
 		Weight:               config.Weight,
 		SerialDevice:         config.SerialDevice,
+		UseUSB:               config.UseUSB,
 		Calibrate:            config.Calibrate,
 		Slow:                 config.Slow,
 		CalibrationSpeed:     config.CalibrationSpeed,

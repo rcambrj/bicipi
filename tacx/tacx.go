@@ -6,12 +6,15 @@ import (
 	"time"
 
 	"github.com/montanaflynn/stats"
+	"github.com/rcambrj/bicipi/tacxcommon"
+	"github.com/rcambrj/bicipi/tacxserial"
 	log "github.com/sirupsen/logrus"
 )
 
 type Config struct {
 	Weight               uint8
 	SerialDevice         string
+	UseUSB               bool
 	Calibrate            bool
 	Slow                 bool
 	CalibrationSpeed     int
@@ -78,7 +81,7 @@ func (t *Tacx) On(listener Listener) {
 
 func (t *Tacx) Start() {
 	go t.startEventLoop()
-	go t.startSerialLoop()
+	go t.startTacxLoop()
 }
 
 func (t *Tacx) startEventLoop() {
@@ -94,17 +97,15 @@ func (t *Tacx) startEventLoop() {
 	}
 }
 
-func (t *Tacx) startSerialLoop() {
+func (t *Tacx) startTacxLoop() {
 	config := t.config
-	port, err := connect(config.SerialDevice)
 
+	device, err := tacxserial.MakeTacxDevice(config.SerialDevice)
 	if err != nil {
 		log.Fatalf("unable to connect to tacx: %v", err)
 	}
 
-	commander := makeCommander(port)
-
-	_, err = getVersion(commander)
+	_, err = device.GetVersion()
 	if err != nil {
 		log.Fatalf("unable to retrieve tacx version: %v", err)
 	}
@@ -125,55 +126,55 @@ func (t *Tacx) startSerialLoop() {
 	var calibrationTolerance = float64(config.CalibrationTolerance)
 	var calibrationResult uint16 = 1040 // a sensible default, in case calibration is disabled
 
-	lastResponse := controlResponse{}
+	lastResponse := tacxcommon.ControlResponse{}
 	for {
 		state := t.getState()
 		startTime := time.Now()
 
-		command := controlCommand{
-			keepalive: lastResponse.keepalive,
-			adjust:    calibrationResult,
+		command := tacxcommon.ControlCommand{
+			Keepalive: lastResponse.Keepalive,
+			Adjust:    calibrationResult,
 		}
 
 		logLine := "mode"
 		if calibrating {
-			command.mode = modeCalibrating
-			command.targetSpeed = calibrationSpeed
-			command.weight = lowestWeight
+			command.Mode = tacxcommon.ModeCalibrating
+			command.TargetSpeed = calibrationSpeed
+			command.Weight = lowestWeight
 			log.WithFields(log.Fields{
 				"mode": "calibrating",
 			}).Debug(logLine)
 		} else if !state.Enabled {
-			command.mode = modeOff
+			command.Mode = tacxcommon.ModeOff
 			log.WithFields(log.Fields{
 				"mode": "off",
 			}).Debug(logLine)
 		} else {
-			command.mode = modeNormal
+			command.Mode = tacxcommon.ModeNormal
 			switch state.Behaviour {
 			case BehaviourERG:
-				command.weight = lowestWeight
-				command.targetLoad = getTargetLoad(targetLoadArgs{
+				command.Weight = lowestWeight
+				command.TargetLoad = getTargetLoad(targetLoadArgs{
 					targetWatts:  state.TargetWatts,
-					currentSpeed: lastResponse.speed,
+					currentSpeed: lastResponse.Speed,
 				})
 				log.WithFields(log.Fields{
 					"mode":      "normal",
 					"behaviour": "erg",
 				}).Debug(logLine)
 			case BehaviourSimulator:
-				command.weight = config.Weight
+				command.Weight = config.Weight
 				targetWattsForSimulator := getWattsForSimulator(targetLoadForSimulatorArgs{
-					currentSpeed:      lastResponse.speed,
+					currentSpeed:      lastResponse.Speed,
 					weight:            config.Weight,
 					windSpeed:         state.WindSpeed,
 					gradient:          state.Gradient,
 					rollingResistance: state.RollingResistance,
 					windResistance:    state.WindResistance,
 				})
-				command.targetLoad = getTargetLoad(targetLoadArgs{
+				command.TargetLoad = getTargetLoad(targetLoadArgs{
 					targetWatts:  targetWattsForSimulator,
-					currentSpeed: lastResponse.speed,
+					currentSpeed: lastResponse.Speed,
 				})
 				log.WithFields(log.Fields{
 					"mode":      "normal",
@@ -182,7 +183,7 @@ func (t *Tacx) startSerialLoop() {
 			}
 		}
 
-		controlResponse, err := sendControl(commander, command)
+		controlResponse, err := device.SendControl(command)
 		if err != nil {
 			log.Errorf("unable to execute main command: %+v", err)
 			// allow this to occasionally fail
@@ -198,7 +199,7 @@ func (t *Tacx) startSerialLoop() {
 			// 4. after, wait for current load to stabilise
 			// start the timer once step 2 begins
 			if calibrationStartedAt.IsZero() {
-				if controlResponse.speed > uint16(calibrationSpeed)/2 {
+				if controlResponse.Speed > uint16(calibrationSpeed)/2 {
 					calibrationStartedAt = time.Now()
 				} else {
 					log.Info("waiting for calibration: pedal once then stop")
@@ -210,7 +211,7 @@ func (t *Tacx) startSerialLoop() {
 				if len(calibrationLastLoads) == cap(calibrationLastLoads) {
 					calibrationLastLoads = calibrationLastLoads[1:]
 				}
-				calibrationLastLoads = append(calibrationLastLoads, float64(controlResponse.currentLoad))
+				calibrationLastLoads = append(calibrationLastLoads, float64(controlResponse.CurrentLoad))
 
 				if untilMinimum < 0 {
 					quartile1, _ := stats.Percentile(calibrationLastLoads, 25)
@@ -219,10 +220,13 @@ func (t *Tacx) startSerialLoop() {
 					average := quartile1 + ((quartile3 - quartile1) / 2)
 					log.WithFields(log.Fields{
 						"stable":    fmt.Sprintf("%t", stable),
+						"remaining": fmt.Sprintf("%.0f", untilMinimum.Seconds()),
+						"speed":     fmt.Sprintf("%v", controlResponse.Speed),
+						"load":      fmt.Sprintf("%v", controlResponse.CurrentLoad),
 						"quartile1": fmt.Sprintf("%.2f", quartile1),
 						"quartile3": fmt.Sprintf("%.2f", quartile3),
 						"average":   fmt.Sprintf("%.2f", average),
-					}).Info("calibrated?")
+					}).Info("calibrating")
 
 					if stable || untilMaximum > 0 {
 						calibrationResult = uint16(average)
@@ -231,21 +235,22 @@ func (t *Tacx) startSerialLoop() {
 							log.Error("calibration aborted: maximum time reached. using last average")
 						}
 					}
+				} else {
+					log.WithFields(log.Fields{
+						"minimum":   fmt.Sprintf("%t", untilMinimum < 0),
+						"remaining": fmt.Sprintf("%.0f", untilMinimum.Seconds()),
+						"speed":     fmt.Sprintf("%v", controlResponse.Speed),
+						"load":      fmt.Sprintf("%v", controlResponse.CurrentLoad),
+					}).Info("warming up")
 				}
-				log.WithFields(log.Fields{
-					"minimum":   fmt.Sprintf("%t", untilMinimum < 0),
-					"remaining": fmt.Sprintf("%.0f", untilMinimum.Seconds()),
-					"speed":     fmt.Sprintf("%v", controlResponse.speed),
-					"load":      fmt.Sprintf("%v", controlResponse.currentLoad),
-				}).Info("calibrating")
 			}
 		}
 
 		t.channel <- TacxEvent{
 			Ready:   !calibrating,
-			Speed:   getKilometers(controlResponse.speed),
-			Load:    getWatts(controlResponse.currentLoad) * float64(controlResponse.speed),
-			Cadence: controlResponse.cadence,
+			Speed:   getKilometers(controlResponse.Speed),
+			Load:    getWatts(controlResponse.CurrentLoad) * float64(controlResponse.Speed),
+			Cadence: controlResponse.Cadence,
 		}
 
 		lastResponse = controlResponse

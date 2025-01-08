@@ -1,14 +1,5 @@
 package tacx
 
-type mode uint8
-
-const (
-	modeOff mode = iota
-	_            // 1 is unused
-	modeNormal
-	modeCalibrating
-)
-
 type Behaviour uint8
 
 const (

@@ -1,21 +1,13 @@
-package tacx
+package tacxserial
 
 import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
 
+	"github.com/rcambrj/bicipi/tacxcommon"
 	log "github.com/sirupsen/logrus"
 )
-
-type controlCommand struct {
-	mode        mode   // see const `mode`
-	targetSpeed int16  // modeCalibrating: raw speed
-	targetLoad  int16  // modeNormal: raw load
-	keepalive   uint8  // value from the last response
-	weight      uint8  // kg
-	adjust      uint16 // adjustment resulting from calibration
-}
 
 type controlCommandRaw struct {
 	target    int16
@@ -70,58 +62,50 @@ type controlResponseRaw struct {
 	Cadence     uint8
 }
 
-type controlResponse struct {
-	speed       uint16 // tacx speed units
-	currentLoad int16  // tacx load units
-	targetLoad  int16  // tacx load units
-	keepalive   uint8  // value to send in the next control
-	cadence     uint8  // rpm
-}
-
 // this is the main function to send and receive data from tacx
 // it both sends the target status and receives the reported status
-func sendControl(t Commander, command controlCommand) (controlResponse, error) {
+func SendControl(t commander, command tacxcommon.ControlCommand) (tacxcommon.ControlResponse, error) {
 	log.WithFields(log.Fields{"command": fmt.Sprintf("%+v", command)}).Debug("sending tacx status")
 
 	var target int16
-	switch command.mode {
-	case modeCalibrating:
-		target = command.targetSpeed
-	case modeNormal:
-		target = command.targetLoad
+	switch command.Mode {
+	case tacxcommon.ModeCalibrating:
+		target = command.TargetSpeed
+	case tacxcommon.ModeNormal:
+		target = command.TargetLoad
 	}
 
 	commandRaw := controlCommandRaw{
 		target:    target,
-		keepalive: command.keepalive,
-		mode:      uint8(command.mode),
-		weight:    command.weight,
-		adjust:    command.adjust,
+		keepalive: command.Keepalive,
+		mode:      uint8(command.Mode),
+		weight:    command.Weight,
+		adjust:    command.Adjust,
 	}
 	log.WithFields(log.Fields{"commandRaw": fmt.Sprintf("%+v", commandRaw)}).Trace("sending tacx status raw")
 
 	commandBytes, err := getControlCommandBytes(commandRaw)
 	if err != nil {
-		return controlResponse{}, fmt.Errorf("unable to process tacx control command: %w", err)
+		return tacxcommon.ControlResponse{}, fmt.Errorf("unable to process tacx control command: %w", err)
 	}
 
 	responseBytes, err := t.sendCommand(commandBytes)
 	if err != nil {
-		return controlResponse{}, fmt.Errorf("unable to send tacx control command: %w", err)
+		return tacxcommon.ControlResponse{}, fmt.Errorf("unable to send tacx control command: %w", err)
 	}
 
 	responseRaw, err := parseControlResponseBytes(responseBytes)
 	if err != nil {
-		return controlResponse{}, fmt.Errorf("unable to process tacx control response: %w", err)
+		return tacxcommon.ControlResponse{}, fmt.Errorf("unable to process tacx control response: %w", err)
 	}
 	log.WithFields(log.Fields{"responseRaw": fmt.Sprintf("%+v", responseRaw)}).Trace("received tacx status raw")
 
-	response := controlResponse{
-		speed:       responseRaw.Speed,
-		currentLoad: responseRaw.CurrentLoad,
-		targetLoad:  responseRaw.TargetLoad,
-		keepalive:   responseRaw.KeepAlive,
-		cadence:     responseRaw.Cadence,
+	response := tacxcommon.ControlResponse{
+		Speed:       responseRaw.Speed,
+		CurrentLoad: responseRaw.CurrentLoad,
+		TargetLoad:  responseRaw.TargetLoad,
+		Keepalive:   responseRaw.KeepAlive,
+		Cadence:     responseRaw.Cadence,
 	}
 	log.WithFields(log.Fields{"response": fmt.Sprintf("%+v", response)}).Debug("received tacx status")
 	return response, nil

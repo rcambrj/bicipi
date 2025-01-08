@@ -1,10 +1,12 @@
-package tacx
+package tacxserial
 
 import (
 	"encoding/binary"
 	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
+	"go.bug.st/serial"
 )
 
 var startOfFrame byte = 0x01
@@ -159,6 +161,7 @@ type SerialPort interface {
 	ResetInputBuffer() error
 	Read(p []byte) (n int, err error)
 	Write(p []byte) (n int, err error)
+	Close() error
 }
 
 func readSerial(port SerialPort) ([]byte, error) {
@@ -194,19 +197,56 @@ func getResponse(port SerialPort) ([]byte, error) {
 	}
 }
 
-type Commander interface {
-	sendCommand(command []byte) ([]byte, error)
+func makeCommander(device string) (commander, error) {
+	if device == "" {
+		log.Info("searching for serial ports...")
+		devices, err := serial.GetPortsList()
+		if err != nil {
+			return nil, fmt.Errorf("unable to list serial ports: %w", err)
+		}
+		if len(devices) == 0 {
+			return nil, fmt.Errorf("no serial ports found")
+		}
+		device = devices[0]
+	}
+	log.WithFields(log.Fields{"device": device}).Info("connecting to serial port")
+
+	mode := &serial.Mode{
+		BaudRate: 19200,
+		Parity:   serial.NoParity,
+		DataBits: 8,
+		StopBits: serial.OneStopBit,
+	}
+	port, err := serial.Open(device, mode)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open serial port: %w", err)
+	}
+
+	// timeout doesn't affect how quickly data will be received.
+	// port.Read() will return based on some internal trigger once some data is
+	// received. this timeout only affects how quickly port.Read() will return
+	// when there is no data being received. this shouldn't happen under normal
+	// operation because port.Read() should not be called again once a valid
+	// frame has been identified (start of frame byte ... end of frame byte)
+	//
+	// a pair of frames (send+receive) will be exchanged within 50ms, with
+	// practically imperceptible delay between send and receive. so this can be
+	// set quite low.
+	err = port.SetReadTimeout(50 * time.Millisecond)
+	if err != nil {
+		return nil, fmt.Errorf("unable to configure serial timeout: %w", err)
+	}
+
+	log.WithFields(log.Fields{"device": device}).Info("connected to serial port")
+
+	return &c{port}, nil
 }
 
-func makeCommander(port SerialPort) Commander {
-	return &C{port}
-}
-
-type C struct {
+type c struct {
 	port SerialPort
 }
 
-func (c *C) sendCommand(command []byte) ([]byte, error) {
+func (c *c) sendCommand(command []byte) ([]byte, error) {
 	log.WithFields(log.Fields{"command": command}).Trace("sending serial command")
 	outFrame, err := serializeCommand(command)
 	if err != nil {
@@ -232,4 +272,8 @@ func (c *C) sendCommand(command []byte) ([]byte, error) {
 
 	log.WithFields(log.Fields{"response": response}).Trace("received serial response")
 	return response, nil
+}
+
+func (c *c) close() error {
+	return c.port.Close()
 }

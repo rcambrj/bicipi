@@ -77,7 +77,10 @@
     uid = 1000;
     group = "nixos";
     home = "/home/nixos";
-    extraGroups = [ "wheel" ];
+    extraGroups = [
+      "wheel"
+      "dialout" # for serial permission
+    ];
     initialPassword = "nixos";
   };
   users.groups.nixos = {
@@ -87,4 +90,9 @@
   environment.systemPackages = with pkgs; [
     flake.packages.${pkgs.stdenv.hostPlatform.system}.bicipi
   ];
+
+  # TODO: restrict this to the bicipi executable
+  services.udev.extraRules = ''
+    SUBSYSTEM=="usb", ATTR{idVendor}=="3561", MODE:="0666"
+  '';
 }

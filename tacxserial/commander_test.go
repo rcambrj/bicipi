@@ -1,4 +1,4 @@
-package tacx
+package tacxserial
 
 import (
 	"reflect"
