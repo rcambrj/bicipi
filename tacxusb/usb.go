@@ -29,7 +29,7 @@ func (td *TacxUSBDevice) GetVersion() (tacxcommon.Version, error) {
 	return getVersion(td.commander)
 }
 func (td *TacxUSBDevice) SendControl(command tacxcommon.ControlCommand) (tacxcommon.ControlResponse, error) {
-	return tacxcommon.ControlResponse{}, nil
+	return sendControl(td.commander, command)
 }
 func (td *TacxUSBDevice) Close() error {
 	return td.commander.close()

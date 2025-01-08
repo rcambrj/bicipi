@@ -1,4 +1,4 @@
-package tacxserial
+package tacxusb
 
 import (
 	"bytes"
@@ -45,8 +45,12 @@ func sendControl(t commander, command tacxcommon.ControlCommand) (tacxcommon.Con
 	if err != nil {
 		return tacxcommon.ControlResponse{}, fmt.Errorf("unable to send tacx control command: %w", err)
 	}
+	if !isValidFrame(responseBytes, frameTypeControl) {
+		log.Warn("received invalid frame")
+		return tacxcommon.ControlResponse{}, ErrReceivedInvalidFrame
+	}
 
-	responseRaw, err := parseControlResponseBytes(responseBytes)
+	responseRaw, err := parseControlResponseBytes(responseBytes[24:])
 	if err != nil {
 		return tacxcommon.ControlResponse{}, fmt.Errorf("unable to process tacx control response: %w", err)
 	}

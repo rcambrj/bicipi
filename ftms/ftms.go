@@ -14,9 +14,9 @@ type Config struct {
 }
 
 type State struct {
-	Speed   uint16
-	Load    int16
-	Cadence uint16
+	Speed   uint16 // decameters/h TODO: decameters?
+	Load    int16  // watts
+	Cadence uint16 // rpm (for both feet lol)
 }
 
 type FTMSEvent struct {

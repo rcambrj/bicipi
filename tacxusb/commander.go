@@ -1,6 +1,8 @@
 package tacxusb
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 
 	"github.com/google/gousb"
@@ -69,6 +71,25 @@ func makeCommander() (commander, error) {
 		outEndpoint: outEndpoint,
 	}, nil
 }
+
+var startOfFrame = []byte{0x12, 0xCC}
+var (
+	frameTypeVersion = []byte{0x03, 0x0C}
+	frameTypeControl = []byte{0x03, 0x13}
+)
+
+// checks whether the frame is valid because sometimes the head unit will
+// return garbage, but certain bytes seem to be correct when the response
+// is valid - check those
+// it seems that the incorrect response is sometimes due to a delay: perhaps the
+// headunit takes some time to issue a request to the motor brake and update
+// its internal cache? it then seems that this cache expires after ~1 second.
+// TODO: there might be a checksum in the frame, check it
+func isValidFrame(frame []byte, frameType []byte) bool {
+	return len(frame) >= 48 && bytes.Equal(frame[0:2], startOfFrame) && bytes.Equal(frame[24:26], frameType)
+}
+
+var ErrReceivedInvalidFrame = errors.New("received invalid frame")
 
 func (c *c) sendCommand(command []byte) ([]byte, error) {
 	log.WithFields(log.Fields{"command": command}).Trace("sending usb command")

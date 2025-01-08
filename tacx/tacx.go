@@ -98,6 +98,11 @@ func (t *Tacx) startEventLoop() {
 	}
 }
 
+func waitForNextIteration(controlCommandsPerSecond int, startTime time.Time) {
+	period := time.Second / time.Duration(controlCommandsPerSecond)
+	time.Sleep(time.Until(startTime.Add(period)))
+}
+
 func (t *Tacx) startTacxLoop() {
 	config := t.config
 
@@ -137,6 +142,7 @@ func (t *Tacx) startTacxLoop() {
 	for {
 		state := t.getState()
 		startTime := time.Now()
+		waitForNextIteration(controlCommandsPerSecond, startTime)
 
 		command := tacxcommon.ControlCommand{
 			Keepalive: lastResponse.Keepalive,
@@ -261,8 +267,5 @@ func (t *Tacx) startTacxLoop() {
 		}
 
 		lastResponse = controlResponse
-
-		period := time.Second / time.Duration(controlCommandsPerSecond)
-		time.Sleep(time.Until(startTime.Add(period)))
 	}
 }

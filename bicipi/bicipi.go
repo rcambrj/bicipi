@@ -54,9 +54,9 @@ func Start(config Config) {
 				ftmsService.Start()
 			}
 			ftmsService.SetState(ftms.State{
-				Speed:   uint16(event.Speed * 100), // TODO what is this unit?
+				Speed:   uint16(event.Speed * 100),
 				Load:    int16(event.Load),
-				Cadence: uint16(event.Cadence * 2), // TODO what is this unit?
+				Cadence: uint16(event.Cadence * 2),
 			})
 		}
 	})
