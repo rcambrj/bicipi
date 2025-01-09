@@ -1,3 +1,51 @@
 schema = 3
 
 [mod]
+  [mod."github.com/creack/goselect"]
+    version = "v0.1.2"
+    hash = "sha256-wb9MhYHM9ozLz5UW12PpWdgxft1KnYtEIpvGDA6d/XA="
+  [mod."github.com/go-ole/go-ole"]
+    version = "v1.2.6"
+    hash = "sha256-+oxitLeJxYF19Z6g+6CgmCHJ1Y5D8raMi2Cb3M6nXCs="
+  [mod."github.com/godbus/dbus/v5"]
+    version = "v5.1.0"
+    hash = "sha256-xOCMJpQK3KTmHTPn/CdqI4j0eENCtMmJDgAIoYqYOEY="
+  [mod."github.com/google/go-cmp"]
+    version = "v0.6.0"
+    hash = "sha256-qgra5jze4iPGP0JSTVeY5qV5AvEnEu39LYAuUCIkMtg="
+  [mod."github.com/google/gousb"]
+    version = "v1.1.3"
+    hash = "sha256-xqe3FvpzN7I287DT5MqCW8OufJ9E5e9WL3XwA1NWr9s="
+  [mod."github.com/montanaflynn/stats"]
+    version = "v0.7.1"
+    hash = "sha256-0QXUA/syOtDSBooh3isAffrVAjpSoBmSMMuZfO5maHg="
+  [mod."github.com/saltosystems/winrt-go"]
+    version = "v0.0.0-20240509164145-4f7860a3bd2b"
+    hash = "sha256-XtuQQAMl29AhAo6SNkiQjxjVMhRUyA2hLhis5sjOUIY="
+  [mod."github.com/sirupsen/logrus"]
+    version = "v1.9.3"
+    hash = "sha256-EnxsWdEUPYid+aZ9H4/iMTs1XMvCLbXZRDyvj89Ebms="
+  [mod."github.com/soypat/cyw43439"]
+    version = "v0.0.0-20240609122733-da9153086796"
+    hash = "sha256-w0W1zE3i8JRv5oCXQ8OkEQjTw/wzL0w2Q1bLsiFql58="
+  [mod."github.com/soypat/seqs"]
+    version = "v0.0.0-20240527012110-1201bab640ef"
+    hash = "sha256-4WcVTz5lBzdE0ia46bo8cH8jEFX1veOobJtrVbuelEQ="
+  [mod."github.com/tinygo-org/cbgo"]
+    version = "v0.0.4"
+    hash = "sha256-89OmvCjk3pGPFm7YHzqdIBi2M/NH/E/eAxGoC+O1KAI="
+  [mod."github.com/tinygo-org/pio"]
+    version = "v0.0.0-20231216154340-cd888eb58899"
+    hash = "sha256-in5q3t0KEo+cB1V0T9REsE3MPmzbxm2bOiByVQEDAnY="
+  [mod."go.bug.st/serial"]
+    version = "v1.6.2"
+    hash = "sha256-ck3PHjqHBBzhso9l8HV1wmcNYesqgeuUTG6vCuRM4cE="
+  [mod."golang.org/x/exp"]
+    version = "v0.0.0-20230728194245-b0cb94b80691"
+    hash = "sha256-jqh9fxEEsuDzG7Gj/3Is3EmMKJf26RHovBte2LFh2Bw="
+  [mod."golang.org/x/sys"]
+    version = "v0.11.0"
+    hash = "sha256-g/LjhABK2c/u6v7M2aAIrHvZjmx/ikGHkef86775N38="
+  [mod."tinygo.org/x/bluetooth"]
+    version = "v0.10.0"
+    hash = "sha256-M+/hFJ2r6vFgYuBicdGhxhMhGnaXfX3JO1UZbaiOhCk="

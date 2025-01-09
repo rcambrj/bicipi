@@ -28,11 +28,13 @@
     "/boot" = {
       device = "/dev/disk/by-label/ESP";
       fsType = "vfat";
+      # options = [ "ro" ];
     };
     "/" = {
       device = "/dev/disk/by-label/nixos";
       fsType = "ext4";
       autoResize = true;
+      # options = [ "ro" ];
     };
   };
   boot.growPartition = true;
