@@ -8,7 +8,7 @@ pkgs.mkShell {
     usbutils
     libusb1
     pkg-config # required for gousb
-    flake.packages.${pkgs.stdenv.hostPlatform.system}.bicipi
+    # flake.packages.${pkgs.stdenv.hostPlatform.system}.bicipi
   ];
 
   # Add environment variables
