@@ -1,4 +1,4 @@
-package tacxusb
+package usb
 
 import (
 	"testing"

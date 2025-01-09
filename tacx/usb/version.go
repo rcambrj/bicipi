@@ -1,23 +1,23 @@
-package tacxusb
+package usb
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/rcambrj/bicipi/tacxcommon"
+	"github.com/rcambrj/bicipi/tacx/common"
 	log "github.com/sirupsen/logrus"
 )
 
-func getVersion(t commander) (tacxcommon.Version, error) {
+func getVersion(t commander) (common.Version, error) {
 	// while the serial connection responds reliably, the USB headunit doesn't.
 	// the first few (3-5) requests appear to fail before, and a delay greater
 	// than 1s between requests seems to make them all fail.
 	tries := 10
 	for {
 		log.Info("requesting tacx version...")
-		response, err := t.sendCommand(tacxcommon.GetVersionCommand())
+		response, err := t.sendCommand(common.GetVersionCommand())
 		if err != nil {
-			return tacxcommon.Version{}, fmt.Errorf("unable to get version: %w", err)
+			return common.Version{}, fmt.Errorf("unable to get version: %w", err)
 		}
 		if !isValidFrame(response, frameTypeVersion) {
 			log.Warn("received invalid frame")
@@ -26,12 +26,12 @@ func getVersion(t commander) (tacxcommon.Version, error) {
 				time.Sleep(100 * time.Millisecond)
 				continue
 			}
-			return tacxcommon.Version{}, ErrReceivedInvalidFrame
+			return common.Version{}, ErrReceivedInvalidFrame
 		}
 
-		version, err := tacxcommon.GetVersionFromResponseBytes(response[24:48])
+		version, err := common.GetVersionFromResponseBytes(response[24:48])
 		if err != nil {
-			return tacxcommon.Version{}, fmt.Errorf("unable to parse usb version: %w", err)
+			return common.Version{}, fmt.Errorf("unable to parse usb version: %w", err)
 		}
 
 		log.WithFields(log.Fields{"version": fmt.Sprintf("%+v", version)}).Info("received tacx version")

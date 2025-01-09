@@ -1,11 +1,11 @@
-package tacxserial
+package serial
 
 import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
 
-	"github.com/rcambrj/bicipi/tacxcommon"
+	"github.com/rcambrj/bicipi/tacx/common"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -33,26 +33,26 @@ type controlResponseRaw struct {
 
 // this is the main function to send and receive data from tacx
 // it both sends the target status and receives the reported status
-func sendControl(t commander, command tacxcommon.ControlCommand) (tacxcommon.ControlResponse, error) {
+func sendControl(t commander, command common.ControlCommand) (common.ControlResponse, error) {
 	log.WithFields(log.Fields{"command": fmt.Sprintf("%+v", command)}).Debug("sending tacx status")
 
-	commandBytes, err := tacxcommon.GetControlCommandBytes(command)
+	commandBytes, err := common.GetControlCommandBytes(command)
 	if err != nil {
-		return tacxcommon.ControlResponse{}, fmt.Errorf("unable to process tacx control command: %w", err)
+		return common.ControlResponse{}, fmt.Errorf("unable to process tacx control command: %w", err)
 	}
 
 	responseBytes, err := t.sendCommand(commandBytes)
 	if err != nil {
-		return tacxcommon.ControlResponse{}, fmt.Errorf("unable to send tacx control command: %w", err)
+		return common.ControlResponse{}, fmt.Errorf("unable to send tacx control command: %w", err)
 	}
 
 	responseRaw, err := parseControlResponseBytes(responseBytes)
 	if err != nil {
-		return tacxcommon.ControlResponse{}, fmt.Errorf("unable to process tacx control response: %w", err)
+		return common.ControlResponse{}, fmt.Errorf("unable to process tacx control response: %w", err)
 	}
 	log.WithFields(log.Fields{"responseRaw": fmt.Sprintf("%+v", responseRaw)}).Trace("received tacx status raw")
 
-	response := tacxcommon.ControlResponse{
+	response := common.ControlResponse{
 		Speed:       responseRaw.Speed,
 		CurrentLoad: responseRaw.CurrentLoad,
 		TargetLoad:  responseRaw.TargetLoad,

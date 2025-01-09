@@ -1,9 +1,9 @@
 package tacx
 
-import "github.com/rcambrj/bicipi/tacxcommon"
+import "github.com/rcambrj/bicipi/tacx/common"
 
 type TacxDevice interface {
-	GetVersion() (tacxcommon.Version, error)
-	SendControl(command tacxcommon.ControlCommand) (tacxcommon.ControlResponse, error)
+	GetVersion() (common.Version, error)
+	SendControl(command common.ControlCommand) (common.ControlResponse, error)
 	Close() error
 }

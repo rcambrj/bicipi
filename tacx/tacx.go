@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/montanaflynn/stats"
-	"github.com/rcambrj/bicipi/tacxcommon"
-	"github.com/rcambrj/bicipi/tacxserial"
-	"github.com/rcambrj/bicipi/tacxusb"
+	"github.com/rcambrj/bicipi/tacx/common"
+	"github.com/rcambrj/bicipi/tacx/serial"
+	"github.com/rcambrj/bicipi/tacx/usb"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -110,9 +110,9 @@ func (t *Tacx) startTacxLoop() {
 	var device TacxDevice
 	var err error
 	if len(config.SerialDevice) > 0 {
-		device, err = tacxserial.MakeTacxDevice(config.SerialDevice)
+		device, err = serial.MakeTacxDevice(config.SerialDevice)
 	} else {
-		device, err = tacxusb.MakeTacxDevice()
+		device, err = usb.MakeTacxDevice()
 	}
 	if err != nil {
 		log.Fatalf("unable to connect to tacx: %v", err)
@@ -139,32 +139,32 @@ func (t *Tacx) startTacxLoop() {
 	var calibrationTolerance = float64(config.CalibrationTolerance)
 	var calibrationResult uint16 = 1040 // a sensible default, in case calibration is disabled
 
-	lastResponse := tacxcommon.ControlResponse{}
+	lastResponse := common.ControlResponse{}
 	for {
 		state := t.getState()
 		startTime := time.Now()
 		waitForNextIteration(controlCommandsPerSecond, startTime)
 
-		command := tacxcommon.ControlCommand{
+		command := common.ControlCommand{
 			Keepalive: lastResponse.Keepalive,
 			Adjust:    calibrationResult,
 		}
 
 		logLine := "mode"
 		if calibrating {
-			command.Mode = tacxcommon.ModeCalibrating
+			command.Mode = common.ModeCalibrating
 			command.TargetSpeed = calibrationSpeed
 			command.Weight = lowestWeight
 			log.WithFields(log.Fields{
 				"mode": "calibrating",
 			}).Debug(logLine)
 		} else if !state.Enabled {
-			command.Mode = tacxcommon.ModeOff
+			command.Mode = common.ModeOff
 			log.WithFields(log.Fields{
 				"mode": "off",
 			}).Debug(logLine)
 		} else {
-			command.Mode = tacxcommon.ModeNormal
+			command.Mode = common.ModeNormal
 			switch state.Behaviour {
 			case BehaviourERG:
 				command.Weight = lowestWeight
@@ -199,8 +199,8 @@ func (t *Tacx) startTacxLoop() {
 
 		controlResponse, err := device.SendControl(command)
 		if err != nil {
-			// tacxusb.ErrReceivedInvalidFrame is common and normal
-			if !errors.Is(err, tacxusb.ErrReceivedInvalidFrame) {
+			// usb.ErrReceivedInvalidFrame is common and normal
+			if !errors.Is(err, usb.ErrReceivedInvalidFrame) {
 				log.Errorf("unable to execute main command: %+v", err)
 			}
 			// allow this to occasionally fail

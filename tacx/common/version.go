@@ -1,4 +1,4 @@
-package tacxcommon
+package common
 
 import (
 	"bytes"

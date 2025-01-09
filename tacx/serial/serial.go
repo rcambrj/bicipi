@@ -1,9 +1,9 @@
-package tacxserial
+package serial
 
 import (
 	"fmt"
 
-	"github.com/rcambrj/bicipi/tacxcommon"
+	"github.com/rcambrj/bicipi/tacx/common"
 )
 
 func MakeTacxDevice(port string) (*TacxSerialDevice, error) {
@@ -25,10 +25,10 @@ type TacxSerialDevice struct {
 	commander commander
 }
 
-func (td *TacxSerialDevice) GetVersion() (tacxcommon.Version, error) {
+func (td *TacxSerialDevice) GetVersion() (common.Version, error) {
 	return getVersion(td.commander)
 }
-func (td *TacxSerialDevice) SendControl(command tacxcommon.ControlCommand) (tacxcommon.ControlResponse, error) {
+func (td *TacxSerialDevice) SendControl(command common.ControlCommand) (common.ControlResponse, error) {
 	return sendControl(td.commander, command)
 }
 func (td *TacxSerialDevice) Close() error {

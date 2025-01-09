@@ -1,9 +1,9 @@
-package tacxusb
+package usb
 
 import (
 	"fmt"
 
-	"github.com/rcambrj/bicipi/tacxcommon"
+	"github.com/rcambrj/bicipi/tacx/common"
 )
 
 func MakeTacxDevice() (*TacxUSBDevice, error) {
@@ -25,10 +25,10 @@ type TacxUSBDevice struct {
 	commander commander
 }
 
-func (td *TacxUSBDevice) GetVersion() (tacxcommon.Version, error) {
+func (td *TacxUSBDevice) GetVersion() (common.Version, error) {
 	return getVersion(td.commander)
 }
-func (td *TacxUSBDevice) SendControl(command tacxcommon.ControlCommand) (tacxcommon.ControlResponse, error) {
+func (td *TacxUSBDevice) SendControl(command common.ControlCommand) (common.ControlResponse, error) {
 	return sendControl(td.commander, command)
 }
 func (td *TacxUSBDevice) Close() error {
