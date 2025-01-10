@@ -6,4 +6,8 @@ result
 result-*
 nixos.img
 
+# go build
 bin
+
+# go mod vendor
+vendor

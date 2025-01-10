@@ -1,7 +1,6 @@
 {
   description = "bicipi";
 
-  # Add all your dependencies here
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-unstable";
     blueprint.url = "github:numtide/blueprint";
@@ -10,8 +9,8 @@
     nix-pi-loader.url  = "github:rcambrj/nix-pi-loader";
     nix-pi-loader.inputs.nixpkgs.follows = "nixpkgs";
     gomod2nix.url = "github:nix-community/gomod2nix";
+    gomod2nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  # Load the blueprint
   outputs = inputs: inputs.blueprint { inherit inputs; };
 }
