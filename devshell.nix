@@ -5,9 +5,10 @@ pkgs.mkShell {
     go
     gopls
     perSystem.gomod2nix.gomod2nix
+    (perSystem.gomod2nix.mkGoEnv { pwd = ./.; })
     usbutils
+    pkg-config # required for libusb1
     libusb1
-    pkg-config # required for gousb
     # flake.packages.${pkgs.stdenv.hostPlatform.system}.bicipi
   ];
 
