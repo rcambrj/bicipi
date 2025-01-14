@@ -5,7 +5,6 @@ perSystem.gomod2nix.buildGoApplication {
   pwd = ./..;
   src = ./..;
   modules = ./../gomod2nix.toml;
-  go = pkgs.go;
   nativeBuildInputs = with pkgs; [
     pkg-config
   ];
