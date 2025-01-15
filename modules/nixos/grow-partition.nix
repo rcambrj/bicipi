@@ -2,7 +2,8 @@
 # boot.growPartition=true will grow the partition at /
 # boot.growPartitionCustom allows the device to be specified
 
-{ config, ... }:
+{ config, lib, pkgs, ... }:
+with lib;
 let
   cfg = config.boot.growPartitionCustom;
 in {

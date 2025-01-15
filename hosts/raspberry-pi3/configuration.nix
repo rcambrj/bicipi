@@ -2,8 +2,11 @@
   imports = [
     inputs.nixos-hardware.nixosModules.raspberry-pi-3
     inputs.nix-pi-loader.nixosModules.default
+    ../../modules/nixos/grow-partition.nix
+    ../../modules/nixos/bicipi.nix
   ];
 
+  system.stateVersion = "25.05";
   nixpkgs.hostPlatform = "aarch64-linux";
   boot.pi-loader.enable = true;
   boot.consoleLogLevel = lib.mkDefault 7;
@@ -28,16 +31,28 @@
     "/boot" = {
       device = "/dev/disk/by-label/ESP";
       fsType = "vfat";
-      # options = [ "ro" ];
     };
     "/" = {
+      fsType = "tmpfs";
+      options = [ "mode=0755" ];
+    };
+    "/mnt/root" = {
       device = "/dev/disk/by-label/nixos";
+      neededForBoot = true;
+      autoResize = true; # resizes filesystem to occupy whole partition
       fsType = "ext4";
-      autoResize = true;
-      # options = [ "ro" ];
+    };
+    "/nix" = {
+      device = "/mnt/root/nix";
+      neededForBoot = true;
+      options = [ "defaults" "bind" ];
+      depends = [ "/mnt/root" ];
     };
   };
-  boot.growPartition = true;
+  boot.growPartitionCustom = {
+    enable = true;
+    device = "/dev/disk/by-label/nixos";
+  };
   system.build.image = (import "${toString modulesPath}/../lib/make-disk-image.nix" {
     inherit lib config pkgs;
     format = "raw";
@@ -74,27 +89,29 @@
     enable = true;
     memoryPercent = 50;
   };
-  users.users.nixos = {
+  users.users.bicipi = {
     isNormalUser = true;
     uid = 1000;
-    group = "nixos";
-    home = "/home/nixos";
+    group = "bicipi";
+    home = "/home/bicipi";
     extraGroups = [
       "wheel"
       "dialout" # for serial permission
     ];
-    initialPassword = "nixos";
+    initialPassword = "bicipi";
   };
-  users.groups.nixos = {
+  users.groups.bicipi = {
     gid = 1000;
   };
 
-  environment.systemPackages = with pkgs; [
-    flake.packages.${pkgs.stdenv.hostPlatform.system}.bicipi
-  ];
+  # environment.systemPackages = with pkgs; [
+  #   flake.packages.${pkgs.stdenv.hostPlatform.system}.bicipi
+  # ];
 
   # TODO: restrict this to the bicipi executable
   services.udev.extraRules = ''
     SUBSYSTEM=="usb", ATTR{idVendor}=="3561", MODE:="0666"
   '';
+
+  services.bicipi.enable = true;
 }
