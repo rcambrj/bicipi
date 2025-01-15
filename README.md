@@ -33,6 +33,8 @@ To find out what's going on, you may connect your PC directly to the Raspberry P
 > [!IMPORTANT]
 > DO NOT connect this Raspberry Pi to your regular network. The password is easily guessed.
 
+If all goes well, after calibration you should see a Bluetooth Low Energy device being advertised called `bicipi`. You can connect to this with TrainerRoad, MyWhoosh or Zwift.
+
 Known issues:
 
 * it must be an USB stick - SD cards won't boot right now for some reason
