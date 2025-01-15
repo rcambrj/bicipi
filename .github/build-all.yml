@@ -9,10 +9,10 @@ on:
       - "*"
 
 jobs:
-  build-pi3:
+  build-raspberry-pi3:
     uses: ./.github/workflows/build.yml
     with:
-      host: pi3
+      host: raspberry-pi3
     permissions:
       contents: write
       id-token: write
