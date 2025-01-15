@@ -10,14 +10,6 @@
   nixpkgs.hostPlatform = "aarch64-linux";
   boot.pi-loader.enable = true;
   boot.consoleLogLevel = lib.mkDefault 7;
-  # The serial ports listed here are:
-  # - ttyS0: for Tegra (Jetson TX1)
-  # - ttyAMA0: for QEMU's -machine virt
-  boot.kernelParams = [
-    # "console=ttyS0,115200n8"
-    # "console=ttyAMA0,115200n8" # conflicts with bluetooth
-    "console=tty0"
-  ];
   nix.extraOptions = ''
     experimental-features = nix-command flakes
   '';
@@ -26,7 +18,6 @@
     Storage=volatile
   '';
   networking.firewall.enable = true;
-  services.openssh.enable = true;
   fileSystems = {
     "/boot" = {
       device = "/dev/disk/by-label/ESP";
@@ -65,7 +56,7 @@
     installBootLoader = true;
     label = "nixos";
   });
-  nix.settings.trusted-users = [ "root" "nixos" ];
+  nix.settings.trusted-users = [ "root" "bicipi" ];
   nix.settings.substituters = lib.mkForce config.nix.settings.trusted-substituters;
   nix.settings.trusted-substituters = [
     "https://cache.nixos.org/"
@@ -81,14 +72,18 @@
   systemd.network = {
     networks."10-wired" = {
       matchConfig.Name = "e*";
-      linkConfig.RequiredForOnline = "routable";
-      networkConfig.DHCP = "yes";
+      networkConfig = {
+        # DHCP = "yes";
+        DHCP = "no";
+        Address = "192.168.24.24/24";
+      };
     };
   };
   zramSwap = {
     enable = true;
     memoryPercent = 50;
   };
+  services.openssh.enable = true;
   users.users.bicipi = {
     isNormalUser = true;
     uid = 1000;
@@ -98,20 +93,19 @@
       "wheel"
       "dialout" # for serial permission
     ];
-    initialPassword = "bicipi";
+    initialPassword = "password";
   };
   users.groups.bicipi = {
     gid = 1000;
   };
 
-  # environment.systemPackages = with pkgs; [
-  #   flake.packages.${pkgs.stdenv.hostPlatform.system}.bicipi
-  # ];
-
-  # TODO: restrict this to the bicipi executable
   services.udev.extraRules = ''
     SUBSYSTEM=="usb", ATTR{idVendor}=="3561", MODE:="0666"
   '';
-
-  services.bicipi.enable = true;
+  hardware.bluetooth.enable = true;
+  services.bicipi = {
+    enable = true;
+    # debug faster:
+    # extraArgs = "--calibrate=false";
+  };
 }

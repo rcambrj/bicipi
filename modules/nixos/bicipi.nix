@@ -1,8 +1,8 @@
-{ config, lib, ... }:
+args@{ perSystem, config, flake, lib, pkgs, ... }:
 with lib;
 let
   cfg = config.services.bicipi;
-  bicipi = ./../../packages/bicipi.nix;
+  bicipi = import ../../packages/bicipi.nix args;
 in {
   options = {
     services.bicipi = {
@@ -18,6 +18,10 @@ in {
     systemd.services.bicipi = {
       wantedBy = [ "multi-user.target" ];
       after = [ "multi-user.target" ];
+      serviceConfig = {
+          Restart = "always";
+          RestartSec = "10s";
+      };
       script = ''
         exec ${bicipi}/bin/bicipi ${cfg.extraArgs}
       '';
