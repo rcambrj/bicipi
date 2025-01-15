@@ -56,7 +56,7 @@
     installBootLoader = true;
     label = "nixos";
   });
-  nix.settings.trusted-users = [ "root" "bicipi" ];
+  nix.settings.trusted-users = [ "bicipi" ];
   nix.settings.substituters = lib.mkForce config.nix.settings.trusted-substituters;
   nix.settings.trusted-substituters = [
     "https://cache.nixos.org/"
@@ -73,7 +73,10 @@
     networks."10-wired" = {
       matchConfig.Name = "e*";
       networkConfig = {
+        # debug faster:
         # DHCP = "yes";
+        # with DHCP this machine is likely to gain a route to the Internet
+        # prevent it by disabling DHCP, but preserve emergency SSH via static IP
         DHCP = "no";
         Address = "192.168.24.24/24";
       };
