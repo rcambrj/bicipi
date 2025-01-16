@@ -15,6 +15,45 @@ jobs:
       # for: magic-nix-cache
       id-token: write
     steps:
+      - name: Maximize build space
+        run: |
+          df -h /
+
+          # ~ 10G
+          echo "/opt/hostedtoolcache"
+          sudo time rm -rf /opt/hostedtoolcache
+          df -h /
+
+          # ~1G
+          echo "/usr/share/dotnet"
+          sudo time rm -rf /usr/share/dotnet
+          df -h /
+
+          # <1G
+          echo "/opt/ghc"
+          sudo time rm -rf /opt/ghc
+          df -h /
+
+          # ~1G
+          echo "/usr/local/share/boost"
+          sudo time rm -rf "/usr/local/share/boost"
+          df -h /
+
+          # <1G
+          echo "$AGENT_TOOLSDIRECTORY"
+          sudo time rm -rf "$AGENT_TOOLSDIRECTORY"
+          df -h /
+
+          # ~4G
+          echo "docker prune"
+          sudo time docker image prune --all --force
+          df -h /
+
+          # ~7G
+          echo "/usr/local/lib/android"
+          sudo time rm -rf /usr/local/lib/android
+          df -h /
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
