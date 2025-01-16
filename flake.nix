@@ -11,7 +11,8 @@
   };
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs?ref=12228ff1752d7b7624a54e9c1af4b222b3c1073b";
+    # pin nixpkgs to latest working https://github.com/NixOS/nixpkgs/pull/362081#issuecomment-2596822330
+    nixpkgs.url = "github:NixOS/nixpkgs?ref=7cf092925906d588daabc696d663c100f2bbacc6";
     blueprint.url = "github:numtide/blueprint";
     blueprint.inputs.nixpkgs.follows = "nixpkgs";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
