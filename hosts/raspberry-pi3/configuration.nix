@@ -1,4 +1,8 @@
-{ config, flake, inputs, lib, modulesPath, pkgs, ... }: {
+{ config, flake, inputs, lib, modulesPath, pkgs, ... }:
+with lib;
+let
+  debug = false;
+in {
   imports = [
     inputs.nixos-hardware.nixosModules.raspberry-pi-3
     inputs.nix-pi-loader.nixosModules.default
@@ -22,6 +26,7 @@
     "/boot" = {
       device = "/dev/disk/by-label/ESP";
       fsType = "vfat";
+      options = mkIf debug [ "ro" ];
     };
     "/" = {
       fsType = "tmpfs";
@@ -63,13 +68,23 @@
   systemd.network = {
     networks."10-wired" = {
       matchConfig.Name = "e*";
-      networkConfig = {
-        # debug faster:
-        # DHCP = "yes";
+      networkConfig = if debug then {
+        DHCP = "yes";
+      } else {
         # with DHCP this machine is likely to gain a route to the Internet
         # prevent it by disabling DHCP, but preserve emergency SSH via static IP
         DHCP = "no";
         Address = "192.168.24.24/24";
+      };
+    };
+  };
+  services.auto-cpufreq = {
+    enable = true;
+    settings = {
+      charger = {
+        governor = "powersave";
+        energy_performance_preference = "power";
+        turbo = "never";
       };
     };
   };
@@ -93,13 +108,16 @@
     gid = 1000;
   };
 
+  environment.systemPackages = with pkgs; [ libraspberrypi ];
+
   services.udev.extraRules = ''
     SUBSYSTEM=="usb", ATTR{idVendor}=="3561", MODE:="0666"
   '';
   hardware.bluetooth.enable = true;
-  services.bicipi = {
+  services.bicipi = if debug then {
     enable = true;
-    # debug faster:
-    # extraArgs = "--calibrate=false";
+    extraArgs = "--calibrate=false";
+  } else {
+    enable = true;
   };
 }
