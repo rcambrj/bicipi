@@ -4,6 +4,18 @@ on:
       host:
         required: true
         type: string
+  workflow_dispatch:
+    inputs:
+      host:
+        type: choice
+        description: Host
+        required: true
+        options:
+          - raspberry-pi3
+      debug_enabled:
+        type: boolean
+        description: Start tmate debug session
+        required: false
 
 jobs:
   build:
@@ -76,6 +88,10 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@v2
         with:
           diagnostic-endpoint: ""
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Build image
         run: nix build -v --print-out-paths -L '.#nixosConfigurations.${{ inputs.host }}.config.system.build.image'
