@@ -18,7 +18,7 @@
     blueprint.inputs.nixpkgs.follows = "nixpkgs";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     raspberry-pi-nix.url  = "github:nix-community/raspberry-pi-nix";
-    raspberry-pi-nix.inputs.nixpkgs.follows = "nixpkgs";
+    # raspberry-pi-nix.inputs.nixpkgs.follows = "nixpkgs"; # pin for binary cache
     gomod2nix.url = "github:nix-community/gomod2nix";
     gomod2nix.inputs.nixpkgs.follows = "nixpkgs";
   };

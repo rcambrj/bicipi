@@ -14,7 +14,7 @@ in {
   nixpkgs.hostPlatform = "aarch64-linux";
   raspberry-pi-nix = {
     board = "bcm2711";
-    firmware-migration-service = false;
+    firmware-migration-service.enable = false;
     libcamera-overlay.enable = false;
   };
   boot.consoleLogLevel = lib.mkDefault 7;
