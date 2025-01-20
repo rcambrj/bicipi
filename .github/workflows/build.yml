@@ -96,7 +96,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
 
       - name: Build image
-        run: nix build -v --print-out-paths -L '.#nixosConfigurations.${{ inputs.host }}.config.system.build.image'
+        run: nix build -v --print-out-paths -L '.#nixosConfigurations.${{ inputs.host }}.config.system.build.sdImage'
 
       - name: Compress image
         run: zip -qq -r nixos-${{ inputs.host }}.zip `find -L ./result -iname "*nixos*"`

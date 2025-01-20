@@ -4,15 +4,19 @@ let
   debug = false;
 in {
   imports = [
-    inputs.nixos-hardware.nixosModules.raspberry-pi-3
-    inputs.nix-pi-loader.nixosModules.default
-    ../../modules/nixos/grow-partition.nix
+    inputs.raspberry-pi-nix.nixosModules.raspberry-pi
+    inputs.raspberry-pi-nix.nixosModules.sd-image
+    # ../../modules/nixos/grow-partition.nix
     ../../modules/nixos/bicipi.nix
   ];
 
   system.stateVersion = "25.05";
   nixpkgs.hostPlatform = "aarch64-linux";
-  boot.pi-loader.enable = true;
+  raspberry-pi-nix = {
+    board = "bcm2711";
+    firmware-migration-service = false;
+    libcamera-overlay.enable = false;
+  };
   boot.consoleLogLevel = lib.mkDefault 7;
   nix.extraOptions = ''
     experimental-features = nix-command flakes
@@ -22,45 +26,33 @@ in {
     Storage=volatile
   '';
   networking.firewall.enable = true;
-  fileSystems = {
-    "/boot" = {
-      device = "/dev/disk/by-label/ESP";
-      fsType = "vfat";
-      options = mkIf debug [ "ro" ];
-    };
-    "/" = {
-      fsType = "tmpfs";
-      options = [ "mode=0755" ];
-    };
-    "/mnt/root" = {
-      device = "/dev/disk/by-label/nixos";
-      neededForBoot = true;
-      autoResize = true; # resizes filesystem to occupy whole partition
-      fsType = "ext4";
-    };
-    "/nix" = {
-      device = "/mnt/root/nix";
-      neededForBoot = true;
-      options = [ "defaults" "bind" ];
-      depends = [ "/mnt/root" ];
-    };
-  };
-  boot.growPartitionCustom = {
-    enable = true;
-    device = "/dev/disk/by-label/nixos";
-  };
-  system.build.image = (import "${toString modulesPath}/../lib/make-disk-image.nix" {
-    inherit lib config pkgs;
-    format = "raw";
-    partitionTableType = "efi";
-    copyChannel = false;
-    diskSize = "auto";
-    additionalSpace = "64M";
-    bootSize = "128M";
-    touchEFIVars = false;
-    installBootLoader = true;
-    label = "nixos";
-  });
+  # fileSystems = {
+  #   "/boot" = {
+  #     device = "/dev/disk/by-label/ESP";
+  #     fsType = "vfat";
+  #     options = mkIf debug [ "ro" ];
+  #   };
+  #   "/" = {
+  #     fsType = "tmpfs";
+  #     options = [ "mode=0755" ];
+  #   };
+  #   "/mnt/root" = {
+  #     device = "/dev/disk/by-label/nixos";
+  #     neededForBoot = true;
+  #     autoResize = true; # resizes filesystem to occupy whole partition
+  #     fsType = "ext4";
+  #   };
+  #   "/nix" = {
+  #     device = "/mnt/root/nix";
+  #     neededForBoot = true;
+  #     options = [ "defaults" "bind" ];
+  #     depends = [ "/mnt/root" ];
+  #   };
+  # };
+  # boot.growPartitionCustom = {
+  #   enable = true;
+  #   device = "/dev/disk/by-label/nixos";
+  # };
   nix.settings.trusted-users = [ "bicipi" ];
   systemd.network.enable = true;
   networking.useDHCP = false;
