@@ -39,9 +39,7 @@ If all goes well, after calibration you should see a Bluetooth Low Energy device
 
 Known issues:
 
-* it must be an USB stick - SD cards won't boot right now for some reason
-* if the Tacx is connected via USB at boot time, it will hang until it's disconnected
-* there is no way to configure any settings right now
+* there is no way to configure any settings right now (do you want this? star the repo to show interest)
 
 ## CLI installation and usage
 
