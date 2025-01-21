@@ -26,11 +26,11 @@ Supports:
 
 > NixOS officially supports only 64-bit ARM, so the downloadable images don't support 32-bit boards such as Raspberry Pi 0, 0W, 1 and 2. You can, however, download the source and build it yourself.
 
-Download the zip for your pi from the releases page and use [etcher](https://etcher.balena.io/) to burn it to a USB stick. Insert the USB stick into your pi and give it power. After a minute or two, connect the Tacx via USB. After a few seconds you should be able to kick the pedal to begin the calibration process.
+Download the zip for your pi from the releases page and use [etcher](https://etcher.balena.io/) to burn it to an SD card or USB stick. Insert the SD/USB into your pi and give it power. Connect the Tacx via USB. After a minute or so you should be able to kick the pedal to begin the calibration process.
 
 The calibration process by default warms the motor and tyre up for 5 minutes. If the motor is still spinning after 10 minutes, something is wrong.
 
-To find out what's going on, you may connect your PC directly to the Raspberry Pi via a network cable, configure your PC with address `192.168.24.123` and subnet `255.255.255.0`, and run `ssh bicipi@192.168.24.24`. If you're prompted for a password, use `password`. You can now scan the logs for the `bicipi` systemd service with `journalctl -xfeu bicipi` and restart it with `sudo systemctl restart bicipi`.
+To find out what's going on, connect your PC directly to the Raspberry Pi via a network cable, configure your PC with address `192.168.24.123`, subnet `255.255.255.0`, and run `ssh bicipi@192.168.24.24`, when prompted for a password, write `password`. You can now scan the logs for the `bicipi` systemd service with `journalctl -xfeu bicipi` and restart it with `sudo systemctl restart bicipi`.
 
 > [!IMPORTANT]
 > DO NOT connect this Raspberry Pi to your regular network or the Internet. The password is easily guessed.
@@ -85,7 +85,7 @@ Usage of bicipi:
 
 ## Direct to motor serial connection
 
-See @totalreverse's [diagram](https://github.com/totalreverse/ttyT1941/wiki#inside-the-t1902-and-t1942) of the `Brake backside socket` for how to connect a serial adapter to the motorbrake.
+See [totalreverse's diagram](https://github.com/totalreverse/ttyT1941/wiki#inside-the-t1902-and-t1942) of the `Brake backside socket` for how to connect a serial adapter to the motorbrake.
 
 Remember to put [a pull-up resistor](https://github.com/totalreverse/ttyT1941/issues/7#issuecomment-619587334) on the RX line (motorbrake TX).
 
