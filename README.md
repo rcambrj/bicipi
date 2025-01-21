@@ -37,6 +37,8 @@ To find out what's going on, connect your PC directly to the Raspberry Pi via a 
 
 If all goes well, after calibration you should see a Bluetooth Low Energy device being advertised called `bicipi`. You can connect to this with TrainerRoad, MyWhoosh or Zwift.
 
+To power the device off, simply remove power. All disks are mounted read only so as to avoid any corruption.
+
 Known issues:
 
 * there is no way to configure any settings right now (do you want this? star the repo to show interest)

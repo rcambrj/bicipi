@@ -29,7 +29,7 @@ in {
     "/boot" = {
       device = "/dev/disk/by-label/BOOT";
       fsType = "vfat";
-      options = mkIf debug [ "ro" ];
+      options = mkIf (!debug) [ "ro" ];
     };
     "/" = {
       fsType = "tmpfs";
@@ -38,8 +38,9 @@ in {
     "/mnt/root" = {
       device = "/dev/disk/by-label/nixos";
       neededForBoot = true;
-      autoResize = true; # resizes filesystem to occupy whole partition
+      autoResize = !debug; # resizes filesystem to occupy whole partition
       fsType = "ext4";
+      options = mkIf (!debug) [ "ro" ];
     };
     "/nix" = {
       device = "/mnt/root/nix";
@@ -49,7 +50,7 @@ in {
     };
   };
   boot.growPartitionCustom = {
-    enable = true;
+    enable = !debug;
     device = "/dev/disk/by-label/nixos";
   };
   system.build.image = (import inputs.nix-pi-loader.nixosModules.make-disk-image {
