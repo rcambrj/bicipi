@@ -1,6 +1,6 @@
 # bicipi
 
-status: incomplete
+status: unstable
 
 **bicipi**: pronounced _bee-see-pie_, is the fusion of the Spanish word for bike + Raspberry Pi
 
