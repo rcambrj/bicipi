@@ -30,7 +30,12 @@ Download the zip for your pi from the releases page and use [etcher](https://etc
 
 The calibration process by default warms the motor and tyre up for 5 minutes. If the motor is still spinning after 10 minutes, something is wrong.
 
-To find out what's going on, connect your PC directly to the Raspberry Pi via a network cable, configure your PC with address `192.168.24.123`, subnet `255.255.255.0`, and run `ssh bicipi@192.168.24.24`, when prompted for a password, write `password`. You can now scan the logs for the `bicipi` systemd service with `journalctl -xfeu bicipi` and restart it with `sudo systemctl restart bicipi`.
+To find out what's going on, open a shell on the pi. You have two options:
+
+1. Connect your PC to the UART pins 8 & 9 (GPIO 14 & 15) and open a shell with `cu` or `screen`
+1. Connect your PC directly to the Raspberry Pi via a network cable, configure your PC with address `192.168.24.123`, subnet `255.255.255.0`, and SSH to `192.168.24.24`. You can now scan the logs for the `bicipi` systemd service with `journalctl -xfeu bicipi` and restart it with `sudo systemctl restart bicipi`.
+
+In both cases, you can log in with user `bicipi` and password `password`.
 
 > [!IMPORTANT]
 > DO NOT connect this Raspberry Pi to your regular network or the Internet. The password is easily guessed.

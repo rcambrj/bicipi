@@ -38,7 +38,7 @@ in {
     "/mnt/root" = {
       device = "/dev/disk/by-label/nixos";
       neededForBoot = true;
-      autoResize = !debug; # resizes filesystem to occupy whole partition
+      autoResize = debug; # resizes filesystem to occupy whole partition
       fsType = "ext4";
       options = mkIf (!debug) [ "ro" ];
     };
@@ -50,7 +50,7 @@ in {
     };
   };
   boot.growPartitionCustom = {
-    enable = !debug;
+    enable = debug;
     device = "/dev/disk/by-label/nixos";
   };
   system.build.image = (import inputs.nix-pi-loader.nixosModules.make-disk-image {
