@@ -22,7 +22,7 @@ Connects to a USB Tacx Fortius T1941 trainer and exposes it via Bluetooth Low En
 Supports:
 
 * Raspberry Pi 3
-* (probably) Raspberry Pi Zero 2W
+* Raspberry Pi Zero 2W (use Pi 3 image)
 
 > NixOS officially supports only 64-bit ARM, so the downloadable images don't support 32-bit boards such as Raspberry Pi 0, 0W, 1 and 2. You can, however, download the source and build it yourself.
 
