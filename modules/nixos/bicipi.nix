@@ -16,8 +16,8 @@ in {
   };
   config = mkIf cfg.enable {
     systemd.services.bicipi = {
-      wantedBy = [ "multi-user.target" ];
-      after = [ "multi-user.target" ];
+      wantedBy = [ "basic.target" ];
+      after = [ "bluetooth.service" ];
       serviceConfig = {
           Restart = "always";
           RestartSec = "10s";
