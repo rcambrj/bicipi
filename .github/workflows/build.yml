@@ -94,6 +94,8 @@ jobs:
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+        with:
+          limit-access-to-actor: true
 
       - name: Build image
         run: nix build -v --print-out-paths -L '.#nixosConfigurations.${{ inputs.host }}.config.system.build.image'
