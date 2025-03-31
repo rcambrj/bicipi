@@ -8,5 +8,3 @@ builds:
   - devShells.x86_64-linux.*
 
   - nixosConfigurations.*
-
-  - nixosConfigurations.raspberry-pi3.config.system.build.image
